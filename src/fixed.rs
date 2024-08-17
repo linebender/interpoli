@@ -1,9 +1,7 @@
 // Copyright 2024 the Interpoli Authors
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-/*!
-Representations of fixed (non-animated) values.
-*/
+//! Representations of fixed (non-animated) values.
 
 #[cfg(all(not(feature = "std"), feature = "libm"))]
 #[allow(unused_imports)]
