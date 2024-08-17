@@ -9,8 +9,7 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use kurbo::{Affine, PathEl, Point, Shape as _, Size, Vec2};
-use peniko::Color;
+use kurbo::{Affine, PathEl, Shape as _};
 
 mod spline;
 mod value;
@@ -19,8 +18,6 @@ pub mod animated;
 pub mod fixed;
 
 pub use value::{Animated, Easing, EasingHandle, Time, Tween, Value, ValueRef};
-
-pub(crate) use spline::SplineToPath;
 
 macro_rules! simple_value {
     ($name:ident) => {

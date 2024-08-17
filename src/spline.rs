@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 use kurbo::{PathEl, Point};
 
 /// Helper trait for converting cubic splines to paths.
-pub trait SplineToPath {
+pub(crate) trait SplineToPath {
     fn get(&self, index: usize) -> Point;
     fn len(&self) -> usize;
 

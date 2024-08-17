@@ -9,7 +9,7 @@ use kurbo::common::FloatFuncs as _;
 use kurbo::{Affine, Point, Vec2};
 
 /// Fixed affine transformation.
-pub type Transform = kurbo::Affine;
+pub type Transform = Affine;
 
 /// Fixed RGBA color.
 pub type Color = peniko::Color;

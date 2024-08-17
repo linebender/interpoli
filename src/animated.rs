@@ -3,12 +3,13 @@
 
 //! Representations of animated values.
 
-use super::*;
-
+use alloc::vec::Vec;
 #[cfg(all(not(feature = "std"), feature = "libm"))]
 #[allow(unused_imports)]
 use kurbo::common::FloatFuncs as _;
-use kurbo::PathEl;
+use kurbo::{Affine, PathEl, Point, Size, Vec2};
+
+use crate::{fixed, spline::SplineToPath, value::Tween, Time, Value};
 
 #[derive(Clone, Debug)]
 pub enum Position {
@@ -54,7 +55,7 @@ impl Transform {
         let anchor = self.anchor.evaluate(frame);
         let position = match &self.position {
             Position::Value(value) => value.evaluate(frame),
-            Position::SplitValues((x_value, y_value)) => kurbo::Point {
+            Position::SplitValues((x_value, y_value)) => Point {
                 x: x_value.evaluate(frame),
                 y: y_value.evaluate(frame),
             },
@@ -389,7 +390,7 @@ impl ColorStops {
 #[derive(Clone, Debug)]
 pub enum Brush {
     /// Solid color.
-    Solid(Value<Color>),
+    Solid(Value<peniko::Color>),
     /// Gradient color.
     Gradient(Gradient),
 }
