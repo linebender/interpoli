@@ -28,7 +28,7 @@ impl<T: Tween> Value<T> {
     }
 }
 
-impl<T: Tween + Default> Default for Value<T> {
+impl<T: Tween> Default for Value<T> {
     fn default() -> Self {
         Self::Fixed(T::default())
     }
