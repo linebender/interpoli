@@ -1,9 +1,7 @@
 // Copyright 2024 the Interpoli Authors
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-/*!
-Representations of animated values.
-*/
+//! Representations of animated values.
 
 use super::*;
 
@@ -94,9 +92,9 @@ impl Transform {
 /// Animated ellipse.
 #[derive(Clone, Debug)]
 pub struct Ellipse {
-    /// True if the ellipse should be drawn in CCW order.
+    /// True if the ellipse should be drawn in counterclockwise order.
     pub is_ccw: bool,
-    /// Position of the ellipse.
+    /// Position of the center of the ellipse.
     pub position: Value<Point>,
     /// Size of the ellipse.
     pub size: Value<Size>,
@@ -118,7 +116,7 @@ impl Ellipse {
 /// Animated rounded rectangle.
 #[derive(Clone, Debug)]
 pub struct Rect {
-    /// True if the rect should be drawn in CCW order.
+    /// True if the rect should be drawn in counterclockwise order.
     pub is_ccw: bool,
     /// Position of the rectangle.
     pub position: Value<Point>,
@@ -185,14 +183,15 @@ pub struct Star {
 pub struct Spline {
     /// True if the spline is closed.
     pub is_closed: bool,
-    /// Collection of times.
+    /// The points in time at which this should evaluate to the corresponding
+    /// value in `values`.
     pub times: Vec<Time>,
     /// Collection of splines.
     pub values: Vec<Vec<Point>>,
 }
 
 impl Spline {
-    /// Evaluates the spline at the given frame and emits the elements
+    /// Evaluates the spline at the given frame and appends the elements
     /// to the specified path.
     pub fn evaluate(&self, frame: f64, path: &mut Vec<PathEl>) -> bool {
         let Some(([ix0, ix1], t, _easing, _hold)) = Time::frames_and_weight(&self.times, frame)
