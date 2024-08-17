@@ -2,7 +2,7 @@
 
 # Interpoli
 
-**TODO: Add tagline**
+**It's the journey, not the destination.**
 
 <!-- TODO: Fix [![Linebender Zulip, #kurbo stream](https://img.shields.io/badge/Linebender-%23kurbo-red?logo=Zulip)](https://xi.zulipchat.com/#narrow/stream/260979-kurbo) -->
 [![dependency status](https://deps.rs/repo/github/linebender/interpoli/status.svg)](https://deps.rs/repo/github/linebender/interpoli)
