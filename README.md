@@ -1,10 +1,16 @@
 <div align="center">
 
+<<<<<<< HEAD
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="graphics/Interpoli-dark.svg?raw=true">
   <source media="(prefers-color-scheme: light)" srcset="graphics/Interpoli-light.svg?raw=true">
   <img height="144pt" alt="Interpoli" srcset="graphics/Interpoli.svg?raw=true">
 </picture>
+=======
+![Interpoli-Light](https://github.com/user-attachments/assets/182a02e1-6227-4562-9a39-c715cc042705#gh-light-mode-only)
+![Interpoli-Dark](https://github.com/user-attachments/assets/97238cae-9aa8-4ec3-aede-c02ef4ebfe88#gb-dark-mode-only)
+
+>>>>>>> 73a0ecf (Update README.md)
 
 **It's the journey, not the destination.**
 
