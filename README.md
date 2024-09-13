@@ -1,6 +1,8 @@
 <div align="center">
 
-# Interpoli
+![Interpoli-Light](https://github.com/user-attachments/assets/182a02e1-6227-4562-9a39-c715cc042705#gh-light-mode-only)
+![Interpoli-Dark](https://github.com/user-attachments/assets/97238cae-9aa8-4ec3-aede-c02ef4ebfe88#gb-dark-mode-only)
+
 
 **It's the journey, not the destination.**
 
