@@ -8,16 +8,25 @@
 
 extern crate alloc;
 
-use alloc::vec::Vec;
-use kurbo::{Affine, PathEl, Shape as _};
+use kurbo::Affine;
 
+mod composition;
 mod spline;
 mod value;
+
+#[cfg(feature = "vello")]
+mod render;
 
 pub mod animated;
 pub mod fixed;
 
+pub use composition::{
+    Composition, Content, Draw, Geometry, GroupTransform, Layer, Mask, Matte, Shape,
+};
 pub use value::{Animated, Easing, EasingHandle, Time, Tween, Value, ValueRef};
+
+#[cfg(feature = "vello")]
+pub use render::Renderer;
 
 macro_rules! simple_value {
     ($name:ident) => {
@@ -75,32 +84,5 @@ impl Brush {
 impl Default for Transform {
     fn default() -> Self {
         Self::Fixed(Affine::IDENTITY)
-    }
-}
-
-#[derive(Clone, Debug)]
-pub enum Geometry {
-    Fixed(Vec<PathEl>),
-    Rect(animated::Rect),
-    Ellipse(animated::Ellipse),
-    Spline(animated::Spline),
-}
-
-impl Geometry {
-    pub fn evaluate(&self, frame: f64, path: &mut Vec<PathEl>) {
-        match self {
-            Self::Fixed(value) => {
-                path.extend_from_slice(value);
-            }
-            Self::Rect(value) => {
-                path.extend(value.evaluate(frame).path_elements(0.1));
-            }
-            Self::Ellipse(value) => {
-                path.extend(value.evaluate(frame).path_elements(0.1));
-            }
-            Self::Spline(value) => {
-                value.evaluate(frame, path);
-            }
-        }
     }
 }
