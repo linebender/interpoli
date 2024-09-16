@@ -1,6 +1,6 @@
 <div align="center">
 
-# Interpoli
+![Interpoli](./graphics/Interpoli.svg)
 
 **It's the journey, not the destination.**
 
