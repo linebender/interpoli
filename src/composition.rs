@@ -5,8 +5,7 @@ use alloc::{string::String, vec::Vec};
 use core::ops::Range;
 use kurbo::{PathEl, Shape as _};
 
-#[cfg(feature = "std")]
-use std::collections::HashMap;
+use hashbrown::HashMap;
 
 use crate::{animated, Brush, Repeater, Stroke, Transform, Value};
 
@@ -22,7 +21,6 @@ pub struct Composition {
     /// Height of the animation.
     pub height: usize,
     /// Precomposed layers that may be instanced.
-    #[cfg(feature = "std")]
     pub assets: HashMap<String, Vec<Layer>>,
     /// Collection of layers.
     pub layers: Vec<Layer>,
