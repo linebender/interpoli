@@ -15,6 +15,7 @@ mod spline;
 mod value;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 #[cfg(feature = "vello")]
 mod render;
 
@@ -25,13 +26,30 @@ pub use composition::{
     Composition, Content, Draw, Geometry, GroupTransform, Layer, Mask, Matte, Shape,
 };
 =======
+=======
+
+>>>>>>> 6fb3d22 (Apply changes from main)
 #[macro_use]
 pub mod timeline;
 pub mod animated;
 pub mod fixed;
 
 pub use timeline::{Frame, Smpte, Timeline};
+<<<<<<< HEAD
 >>>>>>> dc11ff9 (Add SMPTE & Timeline)
+=======
+
+#[cfg(feature = "vello")]
+mod render;
+
+pub mod animated;
+pub mod fixed;
+
+pub use composition::{
+    Composition, Content, Draw, Geometry, GroupTransform, Layer, Mask, Matte, Shape,
+};
+
+>>>>>>> 6fb3d22 (Apply changes from main)
 pub use value::{Animated, Easing, EasingHandle, Time, Tween, Value, ValueRef};
 
 #[cfg(feature = "vello")]
@@ -178,4 +196,9 @@ fn smpte_full_24fps_hour() {
 
     println!("smpte_full_24f_hour: {:?}", time.as_string());
 }
+<<<<<<< HEAD
 >>>>>>> dc11ff9 (Add SMPTE & Timeline)
+=======
+=======
+>>>>>>> 39d8b23cd583bd4689a492efd969d0a60c143b79
+>>>>>>> 6fb3d22 (Apply changes from main)
