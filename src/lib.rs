@@ -8,11 +8,12 @@
 
 extern crate alloc;
 
-use alloc::vec::Vec;
-use kurbo::{Affine, PathEl, Shape as _};
+use kurbo::Affine;
 
+mod composition;
 mod spline;
 mod value;
+
 
 #[macro_use]
 pub mod timeline;
@@ -20,7 +21,21 @@ pub mod animated;
 pub mod fixed;
 
 pub use timeline::{Frame, Smpte, Timeline};
+
+#[cfg(feature = "vello")]
+mod render;
+
+pub mod animated;
+pub mod fixed;
+
+pub use composition::{
+    Composition, Content, Draw, Geometry, GroupTransform, Layer, Mask, Matte, Shape,
+};
+
 pub use value::{Animated, Easing, EasingHandle, Time, Tween, Value, ValueRef};
+
+#[cfg(feature = "vello")]
+pub use render::Renderer;
 
 macro_rules! simple_value {
     ($name:ident) => {
@@ -161,3 +176,5 @@ fn smpte_full_24fps_hour() {
 
     println!("smpte_full_24f_hour: {:?}", time.as_string());
 }
+=======
+>>>>>>> 39d8b23cd583bd4689a492efd969d0a60c143b79
