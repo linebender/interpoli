@@ -17,6 +17,7 @@ default = ["std"]
 std = ["kurbo/std", "peniko/std"]
 libm = ["kurbo/libm", "peniko/libm"]
 mint = ["keyframe/mint_types", "kurbo/mint"]
+vello = ["dep:vello"]
 
 [package.metadata.docs.rs]
 all-features = true
@@ -25,9 +26,11 @@ default-target = "x86_64-unknown-linux-gnu"
 targets = []
 
 [dependencies]
+hashbrown = "0.14.5"
 keyframe = { version = "1.1.1", default-features = false }
 kurbo = { version = "0.11", default-features = false }
 peniko = { version = "0.1.1", default-features = false }
+vello = { version = "0.2.0", default-features = false, optional = true }
 
 [lints]
 rust.unsafe_code = "forbid"

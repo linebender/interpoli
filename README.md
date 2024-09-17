@@ -1,6 +1,10 @@
 <div align="center">
 
-![Interpoli](./graphics/Interpoli.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="graphics/Interpoli-dark.svg?raw=true">
+  <source media="(prefers-color-scheme: light)" srcset="graphics/Interpoli-light.svg?raw=true">
+  <img height="144pt" alt="Interpoli" srcset="graphics/Interpoli.svg?raw=true">
+</picture>
 
 **It's the journey, not the destination.**
 
