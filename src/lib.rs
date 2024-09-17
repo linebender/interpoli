@@ -176,5 +176,3 @@ fn smpte_full_24fps_hour() {
 
     println!("smpte_full_24f_hour: {:?}", time.as_string());
 }
-=======
->>>>>>> 39d8b23cd583bd4689a492efd969d0a60c143b79
