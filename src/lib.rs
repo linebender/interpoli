@@ -14,6 +14,7 @@ mod composition;
 mod spline;
 mod value;
 
+<<<<<<< HEAD
 #[cfg(feature = "vello")]
 mod render;
 
@@ -23,6 +24,14 @@ pub mod fixed;
 pub use composition::{
     Composition, Content, Draw, Geometry, GroupTransform, Layer, Mask, Matte, Shape,
 };
+=======
+#[macro_use]
+pub mod timeline;
+pub mod animated;
+pub mod fixed;
+
+pub use timeline::{Frame, Smpte, Timeline};
+>>>>>>> dc11ff9 (Add SMPTE & Timeline)
 pub use value::{Animated, Easing, EasingHandle, Time, Tween, Value, ValueRef};
 
 #[cfg(feature = "vello")]
@@ -86,3 +95,87 @@ impl Default for Transform {
         Self::Fixed(Affine::IDENTITY)
     }
 }
+<<<<<<< HEAD
+=======
+
+#[derive(Clone, Debug)]
+pub enum Geometry {
+    Fixed(Vec<PathEl>),
+    Rect(animated::Rect),
+    Ellipse(animated::Ellipse),
+    Spline(animated::Spline),
+}
+
+impl Geometry {
+    pub fn evaluate(&self, frame: f64, path: &mut Vec<PathEl>) {
+        match self {
+            Self::Fixed(value) => {
+                path.extend_from_slice(value);
+            }
+            Self::Rect(value) => {
+                path.extend(value.evaluate(frame).path_elements(0.1));
+            }
+            Self::Ellipse(value) => {
+                path.extend(value.evaluate(frame).path_elements(0.1));
+            }
+            Self::Spline(value) => {
+                value.evaluate(frame, path);
+            }
+        }
+    }
+}
+
+#[test]
+fn smpte_macro() {
+    println!("smpte_macro: {:?}", smpte_hmsf!(1;23;45;01.0).as_string());
+}
+
+#[test]
+fn smpte_macro_overflow() {
+    println!("smpte_macro_overflow: {:?}", smpte_hmsf!(99;99;99;99.9).as_string());
+}
+
+#[test]
+fn smpte_set_hms() {
+    println!("smpte_set_hms: {:?}", smpte_hms!(98;76;54).hms_as_string());
+}
+
+#[test]
+fn smpte_with_framerate() {
+    println!("smpte_with_framerate: {:?}", smpte_hmsf_framerate!(00;01;02;56.0, Frame::Fixed(20.0)).as_string());
+}
+
+#[test]
+fn smpte_full_24fps_second() {
+
+    let mut time = smpte_hmsf_framerate!(00;00;00;00.0, Frame::Fixed(24.0));
+
+    for i in 0..24 {
+        time.next_frame();
+    }
+
+    println!("smpte_full_24f_second: {:?}", time.as_string());
+}
+
+#[test]
+fn smpte_full_24fps_minute() {
+    let mut time = smpte_hmsf_framerate!(00;00;00;00.0, Frame::Fixed(24.0));
+
+    for i in 0..60 {
+        time.next_second();
+    }
+
+    println!("smpte_full_24f_minute: {:?}", time.as_string());
+}
+
+#[test]
+fn smpte_full_24fps_hour() {
+    let mut time = smpte_hmsf_framerate!(00;00;00;00.0, Frame::Fixed(24.0));
+
+    for i in 0..60 {
+        time.next_minute();
+    }
+
+    println!("smpte_full_24f_hour: {:?}", time.as_string());
+}
+>>>>>>> dc11ff9 (Add SMPTE & Timeline)
