@@ -42,15 +42,14 @@ pub use timeline::{Frame, Smpte, Timeline};
 #[cfg(feature = "vello")]
 mod render;
 
-pub mod animated;
-pub mod fixed;
-
 pub use composition::{
-    Composition, Content, Draw, Geometry, GroupTransform, Layer, Mask, Matte, Shape,
+    Composition, Content, Draw, GroupTransform, Layer, Mask, Matte,
 };
 
 >>>>>>> 6fb3d22 (Apply changes from main)
 pub use value::{Animated, Easing, EasingHandle, Time, Tween, Value, ValueRef};
+
+pub use kurbo::{PathEl, Shape};
 
 #[cfg(feature = "vello")]
 pub use render::Renderer;
