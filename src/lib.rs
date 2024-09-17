@@ -14,9 +14,12 @@ use kurbo::{Affine, PathEl, Shape as _};
 mod spline;
 mod value;
 
+#[macro_use]
+pub mod timeline;
 pub mod animated;
 pub mod fixed;
 
+pub use timeline::{Frame, Smpte, Timeline};
 pub use value::{Animated, Easing, EasingHandle, Time, Tween, Value, ValueRef};
 
 macro_rules! simple_value {
@@ -103,4 +106,58 @@ impl Geometry {
             }
         }
     }
+}
+
+#[test]
+fn smpte_macro() {
+    println!("smpte_macro: {:?}", smpte_hmsf!(1;23;45;01.0).as_string());
+}
+
+#[test]
+fn smpte_macro_overflow() {
+    println!("smpte_macro_overflow: {:?}", smpte_hmsf!(99;99;99;99.9).as_string());
+}
+
+#[test]
+fn smpte_set_hms() {
+    println!("smpte_set_hms: {:?}", smpte_hms!(98;76;54).hms_as_string());
+}
+
+#[test]
+fn smpte_with_framerate() {
+    println!("smpte_with_framerate: {:?}", smpte_hmsf_framerate!(00;01;02;56.0, Frame::Fixed(20.0)).as_string());
+}
+
+#[test]
+fn smpte_full_24fps_second() {
+
+    let mut time = smpte_hmsf_framerate!(00;00;00;00.0, Frame::Fixed(24.0));
+
+    for i in 0..24 {
+        time.next_frame();
+    }
+
+    println!("smpte_full_24f_second: {:?}", time.as_string());
+}
+
+#[test]
+fn smpte_full_24fps_minute() {
+    let mut time = smpte_hmsf_framerate!(00;00;00;00.0, Frame::Fixed(24.0));
+
+    for i in 0..60 {
+        time.next_second();
+    }
+
+    println!("smpte_full_24f_minute: {:?}", time.as_string());
+}
+
+#[test]
+fn smpte_full_24fps_hour() {
+    let mut time = smpte_hmsf_framerate!(00;00;00;00.0, Frame::Fixed(24.0));
+
+    for i in 0..60 {
+        time.next_minute();
+    }
+
+    println!("smpte_full_24f_hour: {:?}", time.as_string());
 }
