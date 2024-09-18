@@ -148,28 +148,28 @@ impl Geometry {
 
 #[test]
 fn tcode_macro() {
-    println!("tcode_macro: {:?}", tcode_hmsf!(1;23;45;01.0).as_string());
+    println!("tcode_macro: {:?}", tcode_hmsf!(1:23:45:01.0).as_string());
 }
 
 #[test]
 fn tcode_macro_overflow() {
-    println!("tcode_macro_overflow: {:?}", tcode_hmsf!(99;99;99;99.9).as_string());
+    println!("tcode_macro_overflow: {:?}", tcode_hmsf!(99:99:99:99.9).as_string());
 }
 
 #[test]
 fn tcode_set_hms() {
-    println!("tcode_set_hms: {:?}", tcode_hms!(98;76;54).hms_as_string());
+    println!("tcode_set_hms: {:?}", tcode_hms!(98:76:54).hms_as_string());
 }
 
 #[test]
 fn tcode_with_framerate() {
-    println!("tcode_with_framerate: {:?}", tcode_hmsf_framerate!(00;01;02;56.0, Framerate::Fixed(20.0)).as_string());
+    println!("tcode_with_framerate: {:?}", tcode_hmsf_framerate!(00:01:02:56.0, Framerate::Fixed(20.0)).as_string());
 }
 
 #[test]
 fn tcode_full_24fps_second() {
 
-    let mut time = tcode_hmsf_framerate!(00;00;00;00.0, Framerate::Fixed(24.0));
+    let mut time = tcode_hmsf_framerate!(00:00:00:00.0, Framerate::Fixed(24.0));
 
     for i in 0..24 {
         time.next_frame();
@@ -180,7 +180,7 @@ fn tcode_full_24fps_second() {
 
 #[test]
 fn tcode_full_24fps_minute() {
-    let mut time = tcode_hmsf_framerate!(00;00;00;00.0, Framerate::Fixed(24.0));
+    let mut time = tcode_hmsf_framerate!(00:00:00:00.0, Framerate::Fixed(24.0));
 
     for i in 0..60 {
         time.next_second();
@@ -191,7 +191,7 @@ fn tcode_full_24fps_minute() {
 
 #[test]
 fn tcode_full_24fps_hour() {
-    let mut time = tcode_hmsf_framerate!(00;00;00;00.0, Framerate::Fixed(24.0));
+    let mut time = tcode_hmsf_framerate!(00:00:00:00.0, Framerate::Fixed(24.0));
 
     for i in 0..60 {
         time.next_minute();
@@ -216,7 +216,7 @@ fn tcode_add_by_duration() {
 
     use std::time::Duration;
 
-    let mut time = tcode_hmsf_framerate!(00;00;00;00.0, Framerate::Fixed(24.0));
+    let mut time = tcode_hmsf_framerate!(00:00:00:00.0, Framerate::Fixed(24.0));
 
     time.add_by_duration(Duration::from_millis(999));
 
@@ -228,7 +228,7 @@ fn tcode_sub_by_duration() {
 
     use std::time::Duration;
 
-    let mut time = tcode_hmsf_framerate!(01;00;00;00.0, Framerate::Fixed(24.0));
+    let mut time = tcode_hmsf_framerate!(01:00:00:00.0, Framerate::Fixed(24.0));
 
     time.sub_by_duration(Duration::from_secs(1800));
 
