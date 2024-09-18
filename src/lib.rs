@@ -20,7 +20,7 @@ pub mod timeline;
 pub mod animated;
 pub mod fixed;
 
-pub use timeline::{Frame, Smpte, Timeline};
+pub use timeline::{Framerate, Timecode, Timeline};
 
 #[cfg(feature = "vello")]
 mod render;
@@ -123,55 +123,79 @@ impl Geometry {
 }
 
 #[test]
-fn smpte_macro() {
-    println!("smpte_macro: {:?}", smpte_hmsf!(1;23;45;01.0).as_string());
+fn tcode_macro() {
+    println!("tcode_macro: {:?}", tcode_hmsf!(1;23;45;01.0).as_string());
 }
 
 #[test]
-fn smpte_macro_overflow() {
-    println!("smpte_macro_overflow: {:?}", smpte_hmsf!(99;99;99;99.9).as_string());
+fn tcode_macro_overflow() {
+    println!("tcode_macro_overflow: {:?}", tcode_hmsf!(99;99;99;99.9).as_string());
 }
 
 #[test]
-fn smpte_set_hms() {
-    println!("smpte_set_hms: {:?}", smpte_hms!(98;76;54).hms_as_string());
+fn tcode_set_hms() {
+    println!("tcode_set_hms: {:?}", tcode_hms!(98;76;54).hms_as_string());
 }
 
 #[test]
-fn smpte_with_framerate() {
-    println!("smpte_with_framerate: {:?}", smpte_hmsf_framerate!(00;01;02;56.0, Frame::Fixed(20.0)).as_string());
+fn tcode_with_framerate() {
+    println!("tcode_with_framerate: {:?}", tcode_hmsf_framerate!(00;01;02;56.0, Framerate::Fixed(20.0)).as_string());
 }
 
 #[test]
-fn smpte_full_24fps_second() {
+fn tcode_full_24fps_second() {
 
-    let mut time = smpte_hmsf_framerate!(00;00;00;00.0, Frame::Fixed(24.0));
+    let mut time = tcode_hmsf_framerate!(00;00;00;00.0, Framerate::Fixed(24.0));
 
     for i in 0..24 {
         time.next_frame();
     }
 
-    println!("smpte_full_24f_second: {:?}", time.as_string());
+    println!("tcode_full_24f_second: {:?}", time.as_string());
 }
 
 #[test]
-fn smpte_full_24fps_minute() {
-    let mut time = smpte_hmsf_framerate!(00;00;00;00.0, Frame::Fixed(24.0));
+fn tcode_full_24fps_minute() {
+    let mut time = tcode_hmsf_framerate!(00;00;00;00.0, Framerate::Fixed(24.0));
 
     for i in 0..60 {
         time.next_second();
     }
 
-    println!("smpte_full_24f_minute: {:?}", time.as_string());
+    println!("tcode_full_24f_minute: {:?}", time.as_string());
 }
 
 #[test]
-fn smpte_full_24fps_hour() {
-    let mut time = smpte_hmsf_framerate!(00;00;00;00.0, Frame::Fixed(24.0));
+fn tcode_full_24fps_hour() {
+    let mut time = tcode_hmsf_framerate!(00;00;00;00.0, Framerate::Fixed(24.0));
 
     for i in 0..60 {
         time.next_minute();
     }
 
-    println!("smpte_full_24f_hour: {:?}", time.as_string());
+    println!("tcode_full_24f_hour: {:?}", time.as_string());
+}
+
+#[test]
+fn tcode_add_by_duration() {
+
+    use std::time::Duration;
+
+    let mut time = tcode_hmsf_framerate!(00;00;00;00.0, Framerate::Fixed(24.0));
+
+    time.add_by_duration(Duration::from_millis(999));
+
+    println!("tcode_add_by_duration: {:?}", time.as_string());
+}
+
+#[test]
+fn tcode_sub_by_duration() {
+
+    use std::time::Duration;
+
+    let mut time = tcode_hmsf_framerate!(01;00;00;00.0, Framerate::Fixed(24.0));
+
+    time.sub_by_duration(Duration::from_secs(1800));
+
+    println!("tcode_sub_by_duration: {:?}", time.as_string());
 }
