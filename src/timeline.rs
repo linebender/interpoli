@@ -50,21 +50,21 @@ pub struct Timecode {
 
 #[allow(unused_macros)]
 macro_rules! tcode_hmsf {
-    ($h:expr;$m:expr;$s:expr;$f:expr) => {
+    ($h:tt:$m:tt:$s:tt:$f:tt) => {
         Timecode::new($h, $m, $s, $f)
     };
 }
 
 #[allow(unused_macros)]
 macro_rules! tcode_hmsf_framerate {
-    ($h:expr;$m:expr;$s:expr;$f:expr, $fr:expr) => {
+    ($h:tt:$m:tt:$s:tt:$f:tt, $fr:expr) => {
         Timecode::new_with_framerate($h, $m, $s, $f, $fr)
     };
 }
 
 #[allow(unused_macros)]
 macro_rules! tcode_hms {
-    ($h:expr;$m:expr;$s:expr) => {
+    ($h:tt:$m:tt:$s:tt) => {
         Timecode::new($h, $m, $s, 0.0)
     };
 }
