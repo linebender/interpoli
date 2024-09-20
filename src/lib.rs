@@ -14,34 +14,13 @@ mod composition;
 mod spline;
 mod value;
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-#[cfg(feature = "vello")]
-mod render;
 
-pub mod animated;
-pub mod fixed;
-
-pub use composition::{
-    Composition, Content, Draw, Geometry, GroupTransform, Layer, Mask, Matte, Shape,
-};
-=======
-=======
-
->>>>>>> 6fb3d22 (Apply changes from main)
 #[macro_use]
 pub mod timeline;
 pub mod animated;
 pub mod fixed;
 
-<<<<<<< HEAD
-pub use timeline::{Frame, Smpte, Timeline};
-<<<<<<< HEAD
->>>>>>> dc11ff9 (Add SMPTE & Timeline)
-=======
-=======
 pub use timeline::{Framerate, Timecode, Timeline};
->>>>>>> 75532b3 (Fixed bugs)
 
 #[cfg(feature = "vello")]
 mod render;
@@ -50,7 +29,6 @@ pub use composition::{
     Composition, Content, Draw, GroupTransform, Layer, Mask, Matte,
 };
 
->>>>>>> 6fb3d22 (Apply changes from main)
 pub use value::{Animated, Easing, EasingHandle, Time, Tween, Value, ValueRef};
 
 pub use kurbo::{PathEl, Shape};
@@ -116,8 +94,6 @@ impl Default for Transform {
         Self::Fixed(Affine::IDENTITY)
     }
 }
-<<<<<<< HEAD
-=======
 
 #[derive(Clone, Debug)]
 pub enum Geometry {
@@ -199,17 +175,6 @@ fn tcode_full_24fps_hour() {
 
     println!("tcode_full_24f_hour: {:?}", time.as_string());
 }
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> dc11ff9 (Add SMPTE & Timeline)
-=======
-=======
->>>>>>> 39d8b23cd583bd4689a492efd969d0a60c143b79
->>>>>>> 6fb3d22 (Apply changes from main)
-=======
->>>>>>> a005dff (Remove whatever this is)
-=======
 
 #[test]
 fn tcode_add_by_duration() {
@@ -234,9 +199,6 @@ fn tcode_sub_by_duration() {
 
     println!("tcode_sub_by_duration: {:?}", time.as_string());
 }
-<<<<<<< HEAD
->>>>>>> 75532b3 (Fixed bugs)
-=======
 
 #[test]
 fn tcode_ntsc_tv() {
@@ -249,4 +211,3 @@ fn tcode_ntsc_tv() {
 
     println!("tcode_ntsc_tv: {:?}", time.as_string());
 }
->>>>>>> 854974f (Replace `frames` type (`f64` to `isize`))
