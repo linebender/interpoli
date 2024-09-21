@@ -146,6 +146,17 @@ impl Timecode {
 
     pub fn as_string(&self) -> String {
         format!(
+            "{:02}:{:02}:{:02}:{:02} ({:?})",
+            self.hours,
+            self.minutes,
+            self.seconds,
+            self.frames,
+            self.framerate.as_f64()
+        )
+    }
+
+    pub fn full_as_string(&self) -> String {
+    	format!(
             "{:02}:{:02}:{:02}:{:02}:{:09} ({:?})",
             self.hours,
             self.minutes,
