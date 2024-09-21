@@ -122,14 +122,11 @@ impl Geometry {
     }
 }
 
+// Syntax Tests.
+
 #[test]
 fn tcode_macro() {
     println!("tcode_macro: {:?}", tcode_hmsf!(1:23:45:01).as_string());
-}
-
-#[test]
-fn tcode_macro_overflow() {
-    println!("tcode_macro_overflow: {:?}", tcode_hmsf!(99:99:99:99).as_string());
 }
 
 #[test]
@@ -142,6 +139,16 @@ fn tcode_with_framerate() {
     println!("tcode_with_framerate: {:?}", tcode_hmsf_framerate!(00:01:02:56, Framerate::Fixed(20.0)).as_string());
 }
 
+// Assert Tests.
+
+#[test]
+fn tcode_macro_overflow() {
+    let time = tcode_hmsf!(99:99:99:99);
+
+    println!("tcode_macro_overflow: {:?}", tcode_hmsf!(99:99:99:99).as_string());
+    assert!(time.is_equals_to_hmsf(&tcode_hmsf!(100:40:39:99)));
+}
+
 #[test]
 fn tcode_full_24fps_second() {
 
@@ -152,6 +159,7 @@ fn tcode_full_24fps_second() {
     }
 
     println!("tcode_full_24f_second: {:?}", time.as_string());
+    assert!(time.is_equals_to_hmsf(&tcode_hmsf!(00:00:01:00)));
 }
 
 #[test]
@@ -163,6 +171,7 @@ fn tcode_full_24fps_minute() {
     }
 
     println!("tcode_full_24f_minute: {:?}", time.as_string());
+    assert!(time.is_equals_to_hmsf(&tcode_hmsf!(00:01:00:00)));
 }
 
 #[test]
@@ -174,6 +183,7 @@ fn tcode_full_24fps_hour() {
     }
 
     println!("tcode_full_24f_hour: {:?}", time.as_string());
+    assert!(time.is_equals_to_hmsf(&tcode_hmsf!(01:00:00:00)));
 }
 
 #[test]
@@ -186,6 +196,7 @@ fn tcode_add_by_duration() {
     time.add_by_duration(Duration::from_millis(999));
 
     println!("tcode_add_by_duration: {:?}", time.as_string());
+    assert!(time.is_equals_to_hmsf(&tcode_hmsf!(00:00:00:23)));
 }
 
 #[test]
@@ -198,6 +209,7 @@ fn tcode_sub_by_duration() {
     time.sub_by_duration(Duration::from_secs(1800));
 
     println!("tcode_sub_by_duration: {:?}", time.as_string());
+    assert!(time.is_equals_to_hmsf(&tcode_hmsf!(00:30:00:00)));
 }
 
 #[test]
@@ -210,6 +222,7 @@ fn tcode_ntsc_tv() {
     time.add_by_duration(Duration::from_millis(2000));
 
     println!("tcode_ntsc_tv: {:?}", time.as_string());
+    assert!(time.is_equals_to_hmsf(&tcode_hmsf!(00:00:02:00)));
 }
 
 #[test]
@@ -222,4 +235,5 @@ fn tcode_high_fps() {
     time.add_by_duration(Duration::from_millis(2000));
 
     println!("tcode_high_fps: {:?}", time.as_string());
+    assert!(time.is_equals_to_hmsf(&tcode_hmsf!(00:00:02:00)));
 }

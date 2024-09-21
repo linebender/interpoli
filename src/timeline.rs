@@ -226,6 +226,15 @@ impl Timecode {
 
         self.correct_underflow();
     }
+
+    // Checks
+
+    pub fn is_equals_to_hmsf(&self, t: &Timecode) -> bool {
+    	self.frames == t.frames &&
+    	self.seconds == t.seconds &&
+    	self.minutes == t.minutes &&
+    	self.hours == t.hours
+    }
 }
 
 pub struct Timeline {
