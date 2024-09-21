@@ -237,3 +237,16 @@ fn tcode_high_fps() {
     println!("tcode_high_fps: {:?}", time.as_string());
     assert!(time.is_equals_to_hmsf(&tcode_hmsf!(00:00:02:00)));
 }
+
+#[test]
+fn tcode_framerate_standard_that_doesnt_exist() {
+
+    use std::time::Duration;
+
+    let mut time = tcode_hmsf_framerate!(00:00:00:00, Framerate::Fixed(159.3947));
+
+    time.add_by_duration(Duration::from_millis(2000));
+
+    println!("tcode_framerate_standard_that_doesnt_exist: {:?}", time.as_string());
+    assert!(time.is_equals_to_hmsf(&tcode_hmsf!(00:00:02:00)));
+}
