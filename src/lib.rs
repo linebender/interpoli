@@ -211,3 +211,15 @@ fn tcode_ntsc_tv() {
 
     println!("tcode_ntsc_tv: {:?}", time.as_string());
 }
+
+#[test]
+fn tcode_high_fps() {
+
+    use std::time::Duration;
+
+    let mut time = tcode_hmsf_framerate!(00:00:00:00, Framerate::Fixed(1000.0));
+
+    time.add_by_duration(Duration::from_millis(2000));
+
+    println!("tcode_high_fps: {:?}", time.as_string());
+}

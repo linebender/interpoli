@@ -45,6 +45,7 @@ pub struct Timecode {
     minutes: isize,
     seconds: isize,
     frames: isize,
+    nanoframes: isize,
     framerate: Framerate,
 }
 
@@ -58,7 +59,7 @@ macro_rules! tcode_hmsf {
 #[allow(unused_macros)]
 macro_rules! tcode_hmsf_framerate {
     ($h:tt:$m:tt:$s:tt:$f:tt, $fr:expr) => {
-        Timecode::new_with_framerate($h, $m, $s, $f, $fr)
+        Timecode::new_with_framerate($h, $m, $s, $f, 0, $fr)
     };
 }
 
@@ -71,15 +72,16 @@ macro_rules! tcode_hms {
 
 impl Timecode {
     pub fn new(h: isize, m: isize, s: isize, f: isize) -> Self {
-        Timecode::new_with_framerate(h, m, s, f, Framerate::Timestamp)
+        Timecode::new_with_framerate(h, m, s, f, 0, Framerate::Timestamp)
     }
 
-    pub fn new_with_framerate(h: isize, m: isize, s: isize, f: isize, fr: Framerate) -> Self {
+    pub fn new_with_framerate(h: isize, m: isize, s: isize, f: isize, nf: isize, fr: Framerate) -> Self {
         let mut t = Self {
             hours: h,
             minutes: m,
             seconds: s,
             frames: f,
+            nanoframes: nf,
             framerate: fr,
         };
 
@@ -92,6 +94,12 @@ impl Timecode {
         let framerate = self.framerate.as_f64();
 
         if framerate != 0.0 {
+
+        	while self.nanoframes > 999999999 {
+        		self.frames += 1;
+        		self.nanoframes -= 1000000000;
+        	}
+
             while self.frames >= framerate as isize {
                 self.seconds += 1;
                 self.frames -= framerate as isize;
@@ -113,6 +121,12 @@ impl Timecode {
         let framerate = self.framerate.as_f64();
 
         if framerate != 0.0 {
+
+        	while self.nanoframes < 0 {
+        		self.frames -= 1;
+        		self.nanoframes += 1000000000;
+        	}
+
             while self.frames < 0 {
                 self.seconds -= 1;
                 self.frames += framerate as isize;
@@ -132,17 +146,18 @@ impl Timecode {
 
     pub fn as_string(&self) -> String {
         format!(
-            "{:02}:{:02}:{:02}:{:02} ({:?})",
+            "{:02}:{:02}:{:02}:{:02}:{:09} ({:?})",
             self.hours,
             self.minutes,
             self.seconds,
             self.frames,
+            self.nanoframes,
             self.framerate.as_f64()
         )
     }
 
     pub fn hms_as_string(&self) -> String {
-        format!("{:?}:{:?}:{:?}", self.hours, self.minutes, self.seconds)
+        format!("{:02}:{:02}:{:02}", self.hours, self.minutes, self.seconds)
     }
 
     // Add/Next
@@ -167,8 +182,8 @@ impl Timecode {
     }
 
     pub fn add_by_duration(&mut self, d: Duration) {
-        let secs = d.as_secs_f64();
-        self.frames += (secs * self.framerate.as_f64()) as isize;
+        let secs = d.as_nanos() as isize;
+        self.nanoframes += secs * self.framerate.as_f64() as isize;
 
         self.correct_overflow();
     }
@@ -195,8 +210,8 @@ impl Timecode {
     }
 
     pub fn sub_by_duration(&mut self, d: Duration) {
-    	let secs = d.as_secs_f64();
-        self.frames -= (secs * self.framerate.as_f64()) as isize;
+    	let secs = d.as_nanos() as isize;
+        self.nanoframes -= secs * self.framerate.as_f64() as isize;
 
         self.correct_underflow();
     }
