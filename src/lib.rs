@@ -14,16 +14,24 @@ mod composition;
 mod spline;
 mod value;
 
-#[cfg(feature = "vello")]
-mod render;
 
+#[macro_use]
+pub mod timeline;
 pub mod animated;
 pub mod fixed;
 
+pub use timeline::{Framerate, Timecode, Timeline};
+
+#[cfg(feature = "vello")]
+mod render;
+
 pub use composition::{
-    Composition, Content, Draw, Geometry, GroupTransform, Layer, Mask, Matte, Shape,
+    Composition, Content, Draw, GroupTransform, Layer, Mask, Matte,
 };
+
 pub use value::{Animated, Easing, EasingHandle, Time, Tween, Value, ValueRef};
+
+pub use kurbo::{PathEl, Shape};
 
 #[cfg(feature = "vello")]
 pub use render::Renderer;
@@ -85,4 +93,160 @@ impl Default for Transform {
     fn default() -> Self {
         Self::Fixed(Affine::IDENTITY)
     }
+}
+
+#[derive(Clone, Debug)]
+pub enum Geometry {
+    Fixed(Vec<PathEl>),
+    Rect(animated::Rect),
+    Ellipse(animated::Ellipse),
+    Spline(animated::Spline),
+}
+
+impl Geometry {
+    pub fn evaluate(&self, frame: f64, path: &mut Vec<PathEl>) {
+        match self {
+            Self::Fixed(value) => {
+                path.extend_from_slice(value);
+            }
+            Self::Rect(value) => {
+                path.extend(value.evaluate(frame).path_elements(0.1));
+            }
+            Self::Ellipse(value) => {
+                path.extend(value.evaluate(frame).path_elements(0.1));
+            }
+            Self::Spline(value) => {
+                value.evaluate(frame, path);
+            }
+        }
+    }
+}
+
+// Syntax Tests.
+
+#[test]
+fn tcode_macro() {
+    println!("tcode_macro: {:?}", tcode_hmsf!(1:23:45:01).as_string());
+}
+
+#[test]
+fn tcode_set_hms() {
+    println!("tcode_set_hms: {:?}", tcode_hms!(98:76:54).hms_as_string());
+}
+
+#[test]
+fn tcode_with_framerate() {
+    println!("tcode_with_framerate: {:?}", tcode_hmsf_framerate!(00:01:02:56, Framerate::Fixed(20.0)).as_string());
+}
+
+// Assert Tests.
+
+#[test]
+fn tcode_macro_overflow() {
+    let time = tcode_hmsf!(99:99:99:99);
+
+    println!("tcode_macro_overflow: {:?}", tcode_hmsf!(99:99:99:99).as_string());
+    assert!(time.is_equals_to_hmsf(&tcode_hmsf!(100:40:39:99)));
+}
+
+#[test]
+fn tcode_full_24fps_second() {
+
+    let mut time = tcode_hmsf_framerate!(00:00:00:00, Framerate::Fixed(24.0));
+
+    for i in 0..24 {
+        time.next_frame();
+    }
+
+    println!("tcode_full_24f_second: {:?}", time.as_string());
+    assert!(time.is_equals_to_hmsf(&tcode_hmsf!(00:00:01:00)));
+}
+
+#[test]
+fn tcode_full_24fps_minute() {
+    let mut time = tcode_hmsf_framerate!(00:00:00:00, Framerate::Fixed(24.0));
+
+    for i in 0..60 {
+        time.next_second();
+    }
+
+    println!("tcode_full_24f_minute: {:?}", time.as_string());
+    assert!(time.is_equals_to_hmsf(&tcode_hmsf!(00:01:00:00)));
+}
+
+#[test]
+fn tcode_full_24fps_hour() {
+    let mut time = tcode_hmsf_framerate!(00:00:00:00, Framerate::Fixed(24.0));
+
+    for i in 0..60 {
+        time.next_minute();
+    }
+
+    println!("tcode_full_24f_hour: {:?}", time.as_string());
+    assert!(time.is_equals_to_hmsf(&tcode_hmsf!(01:00:00:00)));
+}
+
+#[test]
+fn tcode_add_by_duration() {
+
+    use std::time::Duration;
+
+    let mut time = tcode_hmsf_framerate!(00:00:00:00, Framerate::Fixed(24.0));
+
+    time.add_by_duration(Duration::from_millis(999));
+
+    println!("tcode_add_by_duration: {:?}", time.as_string());
+    assert!(time.is_equals_to_hmsf(&tcode_hmsf!(00:00:00:23)));
+}
+
+#[test]
+fn tcode_sub_by_duration() {
+
+    use std::time::Duration;
+
+    let mut time = tcode_hmsf_framerate!(01:00:00:00, Framerate::Fixed(24.0));
+
+    time.sub_by_duration(Duration::from_secs(1800));
+
+    println!("tcode_sub_by_duration: {:?}", time.as_string());
+    assert!(time.is_equals_to_hmsf(&tcode_hmsf!(00:30:00:00)));
+}
+
+#[test]
+fn tcode_ntsc_tv() {
+
+    use std::time::Duration;
+
+    let mut time = tcode_hmsf_framerate!(00:00:00:00, Framerate::Fixed(23.97));
+
+    time.add_by_duration(Duration::from_millis(2000));
+
+    println!("tcode_ntsc_tv: {:?}", time.as_string());
+    assert!(time.is_equals_to_hmsf(&tcode_hmsf!(00:00:02:00)));
+}
+
+#[test]
+fn tcode_high_fps() {
+
+    use std::time::Duration;
+
+    let mut time = tcode_hmsf_framerate!(00:00:00:00, Framerate::Fixed(1000.0));
+
+    time.add_by_duration(Duration::from_millis(2000));
+
+    println!("tcode_high_fps: {:?}", time.as_string());
+    assert!(time.is_equals_to_hmsf(&tcode_hmsf!(00:00:02:00)));
+}
+
+#[test]
+fn tcode_framerate_standard_that_doesnt_exist() {
+
+    use std::time::Duration;
+
+    let mut time = tcode_hmsf_framerate!(00:00:00:00, Framerate::Fixed(159.3947));
+
+    time.add_by_duration(Duration::from_millis(2000));
+
+    println!("tcode_framerate_standard_that_doesnt_exist: {:?}", time.as_string());
+    assert!(time.is_equals_to_hmsf(&tcode_hmsf!(00:00:02:00)));
 }
