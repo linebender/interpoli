@@ -266,3 +266,7 @@ impl Timecode {
     	self.hours == t.hours
     }
 }
+
+pub struct Timeline {
+    time: Timecode,
+}
