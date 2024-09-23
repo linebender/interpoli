@@ -248,14 +248,14 @@ impl Timecode {
     	self.add_by_duration(d);
     }
 
-    pub fn as_nanoseconds(&self) -> isize {
-    	let mut nanos: isize = 0;
-
-    	nanos += self.hours * 3.6e+12;
-    	nanos += self.minutes * 6e+10;
-    	nanos += self.seconds * 1e+9;
-    	nanos += (self.frames / self.framerate.as_f64() as isize)
-    }
+    //pub fn as_nanoseconds(&self) -> isize {
+    //	let mut nanos: isize = 0;
+//
+    //	nanos += self.hours * 3.6e+12;
+    //	nanos += self.minutes * 6e+10;
+    //	nanos += self.seconds * 1e+9;
+    //	nanos += (self.frames / self.framerate.as_f64() as isize)
+    //}
 
     // Checks
 
