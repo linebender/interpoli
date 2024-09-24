@@ -32,10 +32,10 @@ impl Framerate {
     }
 
     pub fn is_interpolated(&self) -> bool {
-    	match self {
-    		Framerate::Interpolated(_s) => true,
-    		_ => false,
-    	}
+        match self {
+            Framerate::Interpolated(_s) => true,
+            _ => false,
+        }
     }
 }
 
@@ -75,7 +75,14 @@ impl Timecode {
         Timecode::new_with_framerate(h, m, s, f, 0, Framerate::Timestamp)
     }
 
-    pub fn new_with_framerate(h: isize, m: isize, s: isize, f: isize, nf: isize, fr: Framerate) -> Self {
+    pub fn new_with_framerate(
+        h: isize,
+        m: isize,
+        s: isize,
+        f: isize,
+        nf: isize,
+        fr: Framerate,
+    ) -> Self {
         let mut t = Self {
             hours: h,
             minutes: m,
@@ -94,11 +101,10 @@ impl Timecode {
         let framerate = self.framerate.as_f64();
 
         if framerate != 0.0 {
-
-        	while self.nanoframes > 999999999 {
-        		self.frames += 1;
-        		self.nanoframes -= 1000000000;
-        	}
+            while self.nanoframes > 999999999 {
+                self.frames += 1;
+                self.nanoframes -= 1000000000;
+            }
 
             while self.frames >= framerate as isize {
                 self.seconds += 1;
@@ -121,11 +127,10 @@ impl Timecode {
         let framerate = self.framerate.as_f64();
 
         if framerate != 0.0 {
-
-        	while self.nanoframes < 0 {
-        		self.frames -= 1;
-        		self.nanoframes += 1000000000;
-        	}
+            while self.nanoframes < 0 {
+                self.frames -= 1;
+                self.nanoframes += 1000000000;
+            }
 
             while self.frames < 0 {
                 self.seconds -= 1;
@@ -156,7 +161,7 @@ impl Timecode {
     }
 
     pub fn full_as_string(&self) -> String {
-    	format!(
+        format!(
             "{:02}:{:02}:{:02}:{:02}:{:09} ({:?})",
             self.hours,
             self.minutes,
@@ -175,25 +180,25 @@ impl Timecode {
 
     #[inline]
     pub fn next_frame(&mut self) {
-    	self.frames += 1;
-    	self.correct_overflow();
+        self.frames += 1;
+        self.correct_overflow();
     }
 
     #[inline]
     pub fn next_second(&mut self) {
-    	self.seconds += 1;
-    	self.correct_overflow();
+        self.seconds += 1;
+        self.correct_overflow();
     }
 
     #[inline]
     pub fn next_minute(&mut self) {
-    	self.minutes += 1;
-    	self.correct_overflow();
+        self.minutes += 1;
+        self.correct_overflow();
     }
 
     #[inline]
     pub fn next_hour(&mut self) {
-    	self.hours += 1;
+        self.hours += 1;
     }
 
     pub fn add_by_duration(&mut self, d: Duration) {
@@ -203,67 +208,95 @@ impl Timecode {
         self.correct_overflow();
     }
 
+    pub fn add_by_timestamp(&mut self, t: Timecode) {
+        let nanos = t.as_nanoseconds();
+        self.nanoframes += nanos * self.framerate.as_f64() as isize;
+
+        self.correct_overflow();
+    }
+
     // Sub/Back
 
     #[inline]
     pub fn back_frame(&mut self) {
-    	self.frames -= 1;
-    	self.correct_underflow();
+        self.frames -= 1;
+        self.correct_underflow();
     }
 
     #[inline]
     pub fn back_second(&mut self) {
-    	self.seconds -= 1;
-    	self.correct_underflow();
+        self.seconds -= 1;
+        self.correct_underflow();
     }
 
     #[inline]
     pub fn back_minute(&mut self) {
-    	self.minutes -= 1;
-    	self.correct_underflow();
+        self.minutes -= 1;
+        self.correct_underflow();
     }
 
     #[inline]
     pub fn back_hour(&mut self) {
-    	self.hours -= 1;
+        self.hours -= 1;
     }
 
     pub fn sub_by_duration(&mut self, d: Duration) {
-    	let nanos = d.as_nanos() as isize;
+        let nanos = d.as_nanos() as isize;
+        self.nanoframes -= nanos * self.framerate.as_f64() as isize;
+
+        self.correct_underflow();
+    }
+
+    pub fn sub_by_timestamp(&mut self, t: Timecode) {
+        let nanos = t.as_nanoseconds();
         self.nanoframes -= nanos * self.framerate.as_f64() as isize;
 
         self.correct_underflow();
     }
 
     pub fn reset(&mut self) {
-    	self.nanoframes = 0;
-    	self.frames = 0;
-    	self.seconds = 0;
-    	self.minutes = 0;
-    	self.hours = 0;
+        self.nanoframes = 0;
+        self.frames = 0;
+        self.seconds = 0;
+        self.minutes = 0;
+        self.hours = 0;
     }
 
     pub fn set_by_duration(&mut self, d: Duration) {
-    	self.reset();
-    	self.add_by_duration(d);
+        self.reset();
+        self.add_by_duration(d);
     }
 
-    //pub fn as_nanoseconds(&self) -> isize {
-    //	let mut nanos: isize = 0;
-//
-    //	nanos += self.hours * 3.6e+12;
-    //	nanos += self.minutes * 6e+10;
-    //	nanos += self.seconds * 1e+9;
-    //	nanos += (self.frames / self.framerate.as_f64() as isize)
-    //}
+    pub fn set_by_timestamp(&mut self, t: Timecode) {
+        self.reset();
+        self.add_by_timestamp(t);
+    }
+
+    pub fn as_nanoseconds(&self) -> isize {
+        let mut nanos: isize = 0;
+        let framerate = if self.framerate.as_f64() != 0.0 {
+            self.framerate.as_f64()
+        } else {
+            // If it's a timestamp, cancel the division.
+            1.0
+        };
+
+        nanos += self.nanoframes / framerate as isize;
+        nanos += (self.frames / framerate as isize) * 1_000_000;
+        nanos += self.seconds * (1e+9 as isize);
+        nanos += self.minutes * (6e+10 as isize);
+        nanos += self.hours * (3.6e+12 as isize);
+
+        nanos
+    }
 
     // Checks
 
     pub fn is_equals_to_hmsf(&self, t: &Timecode) -> bool {
-    	self.frames == t.frames &&
-    	self.seconds == t.seconds &&
-    	self.minutes == t.minutes &&
-    	self.hours == t.hours
+        self.frames == t.frames
+            && self.seconds == t.seconds
+            && self.minutes == t.minutes
+            && self.hours == t.hours
     }
 }
 

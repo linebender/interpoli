@@ -14,7 +14,6 @@ mod composition;
 mod spline;
 mod value;
 
-
 #[macro_use]
 pub mod timeline;
 pub mod animated;
@@ -25,9 +24,7 @@ pub use timeline::{Framerate, Timecode, Timeline};
 #[cfg(feature = "vello")]
 mod render;
 
-pub use composition::{
-    Composition, Content, Draw, GroupTransform, Layer, Mask, Matte,
-};
+pub use composition::{Composition, Content, Draw, GroupTransform, Layer, Mask, Matte};
 
 pub use value::{Animated, Easing, EasingHandle, Time, Tween, Value, ValueRef};
 
@@ -136,7 +133,10 @@ fn tcode_set_hms() {
 
 #[test]
 fn tcode_with_framerate() {
-    println!("tcode_with_framerate: {:?}", tcode_hmsf_framerate!(00:01:02:56, Framerate::Fixed(20.0)).as_string());
+    println!(
+        "tcode_with_framerate: {:?}",
+        tcode_hmsf_framerate!(00:01:02:56, Framerate::Fixed(20.0)).as_string()
+    );
 }
 
 // Assert Tests.
@@ -145,13 +145,15 @@ fn tcode_with_framerate() {
 fn tcode_macro_overflow() {
     let time = tcode_hmsf!(99:99:99:99);
 
-    println!("tcode_macro_overflow: {:?}", tcode_hmsf!(99:99:99:99).as_string());
+    println!(
+        "tcode_macro_overflow: {:?}",
+        tcode_hmsf!(99:99:99:99).as_string()
+    );
     assert!(time.is_equals_to_hmsf(&tcode_hmsf!(100:40:39:99)));
 }
 
 #[test]
 fn tcode_full_24fps_second() {
-
     let mut time = tcode_hmsf_framerate!(00:00:00:00, Framerate::Fixed(24.0));
 
     for i in 0..24 {
@@ -187,8 +189,29 @@ fn tcode_full_24fps_hour() {
 }
 
 #[test]
-fn tcode_add_by_duration() {
+fn tcode_set_by_duration() {
+    use std::time::Duration;
 
+    let mut time = tcode_hmsf_framerate!(00:00:10:00, Framerate::Fixed(23.97));
+
+    time.set_by_duration(Duration::from_secs(2));
+
+    println!("tcode_set_by_duration: {:?}", time.as_string());
+    assert!(time.is_equals_to_hmsf(&tcode_hmsf!(00:00:02:00)));
+}
+
+#[test]
+fn tcode_set_by_timestamp() {
+    let mut time = tcode_hmsf_framerate!(00:00:10:00, Framerate::Fixed(23.97));
+
+    time.set_by_timestamp(tcode_hmsf!(00:05:00:00));
+
+    println!("tcode_set_by_timestamp: {:?}", time.as_string());
+    assert!(time.is_equals_to_hmsf(&tcode_hmsf!(00:05:00:00)));
+}
+
+#[test]
+fn tcode_add_by_duration() {
     use std::time::Duration;
 
     let mut time = tcode_hmsf_framerate!(00:00:00:00, Framerate::Fixed(24.0));
@@ -200,8 +223,17 @@ fn tcode_add_by_duration() {
 }
 
 #[test]
-fn tcode_sub_by_duration() {
+fn tcode_add_by_timestamp() {
+    let mut time = tcode_hmsf_framerate!(00:00:05:00, Framerate::Fixed(24.0));
 
+    time.add_by_timestamp(tcode_hmsf!(00:00:05:00));
+
+    println!("tcode_add_by_timestamp: {:?}", time.as_string());
+    assert!(time.is_equals_to_hmsf(&tcode_hmsf!(00:00:10:00)));
+}
+
+#[test]
+fn tcode_sub_by_duration() {
     use std::time::Duration;
 
     let mut time = tcode_hmsf_framerate!(01:00:00:00, Framerate::Fixed(24.0));
@@ -213,8 +245,17 @@ fn tcode_sub_by_duration() {
 }
 
 #[test]
-fn tcode_ntsc_tv() {
+fn tcode_sub_by_timestamp() {
+    let mut time = tcode_hmsf_framerate!(00:01:00:00, Framerate::Fixed(24.0));
 
+    time.sub_by_timestamp(tcode_hmsf!(00:00:20:00));
+
+    println!("tcode_sub_by_timestamp: {:?}", time.as_string());
+    assert!(time.is_equals_to_hmsf(&tcode_hmsf!(00:00:40:00)));
+}
+
+#[test]
+fn tcode_ntsc_tv() {
     use std::time::Duration;
 
     let mut time = tcode_hmsf_framerate!(00:00:00:00, Framerate::Fixed(23.97));
@@ -227,7 +268,6 @@ fn tcode_ntsc_tv() {
 
 #[test]
 fn tcode_high_fps() {
-
     use std::time::Duration;
 
     let mut time = tcode_hmsf_framerate!(00:00:00:00, Framerate::Fixed(1000.0));
@@ -240,13 +280,31 @@ fn tcode_high_fps() {
 
 #[test]
 fn tcode_framerate_standard_that_doesnt_exist() {
-
     use std::time::Duration;
 
     let mut time = tcode_hmsf_framerate!(00:00:00:00, Framerate::Fixed(159.3947));
 
     time.add_by_duration(Duration::from_millis(2000));
 
-    println!("tcode_framerate_standard_that_doesnt_exist: {:?}", time.as_string());
+    println!(
+        "tcode_framerate_standard_that_doesnt_exist: {:?}",
+        time.as_string()
+    );
     assert!(time.is_equals_to_hmsf(&tcode_hmsf!(00:00:02:00)));
+}
+
+#[test]
+fn tcode_as_nanoseconds() {
+    use std::time::Duration;
+
+    let time = tcode_hmsf_framerate!(00:00:09:00, Framerate::Fixed(30.0));
+    let dur = Duration::from_secs(9);
+
+    println!(
+        "tcode_as_nanoseconds: {:?} ({:?}) = {:?}",
+        time.as_nanoseconds(),
+        time.as_string(),
+        dur.as_nanos()
+    );
+    assert!(time.as_nanoseconds() == dur.as_nanos() as isize);
 }
