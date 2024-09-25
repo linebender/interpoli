@@ -308,3 +308,17 @@ fn tcode_as_nanoseconds() {
     );
     assert!(time.as_nanoseconds() == dur.as_nanos() as isize);
 }
+
+#[test]
+fn tcode_get_lerp_time_between() {
+
+    let time = tcode_hmsf_framerate!(00:00:05:00, Framerate::Fixed(60.0));
+
+    let begin = tcode_hmsf!(00:00:00:00);
+    let end = tcode_hmsf!(00:00:10:00);
+
+    let result = time.get_lerp_time_between(&begin, &end);
+
+    println!("tcode_get_lerp_time_between: {:?}", result);
+    assert!(result == 0.5);
+}

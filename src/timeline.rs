@@ -298,6 +298,26 @@ impl Timecode {
             && self.minutes == t.minutes
             && self.hours == t.hours
     }
+
+    // Utils
+
+    pub fn get_lerp_time_between(&self, begin: &Timecode, end: &Timecode) -> f64 {
+
+        // TODO: There should've be a much efficient way to do this.
+        // But i think it'll work for now...
+
+        let t = self.as_nanoseconds();
+        let a = begin.as_nanoseconds();
+        let b = end.as_nanoseconds();
+
+        let b_f64 = b as f64;
+        let t_f64 = t as f64;
+
+        let lerp = a + (b - a);
+        let res = (lerp as f64 * (t_f64 / b_f64)) / b_f64;
+
+        res
+    }
 }
 
 pub struct Timeline {
