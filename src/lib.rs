@@ -311,7 +311,6 @@ fn tcode_as_nanoseconds() {
 
 #[test]
 fn tcode_get_lerp_time_between() {
-
     let time = tcode_hmsf_framerate!(00:00:00:12, Framerate::Fixed(24.0));
 
     let begin = tcode_hmsf!(00:00:00:00);
@@ -324,8 +323,22 @@ fn tcode_get_lerp_time_between() {
 }
 
 #[test]
-fn tline_new() {
+fn tcode_lerp_fixed_vs_inter() {
+    let time_fixed = tcode_full!(00:00:00:00:500_000_000, Framerate::Fixed(1.0));
+    let time_inter = tcode_full!(00:00:00:00:500_000_000, Framerate::Interpolated(1.0));
 
+    let begin = tcode_hmsf!(00:00:00:00);
+    let end = tcode_hmsf!(00:00:00:01);
+
+    let fixed_result = time_fixed.get_lerp_time_between(&begin, &end);
+    let inter_result = time_inter.get_lerp_time_between(&begin, &end);
+
+    println!("tcode_lerp_fixed_vs_inter: fixed {:?} | interpolated {:?}", fixed_result, inter_result);
+    assert!(fixed_result == 0.0 && inter_result == 0.5);
+}
+
+#[test]
+fn tline_new() {
     let timeline = Timeline::new(Framerate::Fixed(24.0));
 
     assert!(timeline.time().is_equals_to_hmsf(&tcode_hmsf!(00:00:00:00)));

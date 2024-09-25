@@ -70,6 +70,12 @@ macro_rules! tcode_hms {
     };
 }
 
+macro_rules! tcode_full {
+    ($h:tt:$m:tt:$s:tt:$f:tt:$nf:tt, $fr:expr) => {
+        Timecode::new_with_framerate($h, $m, $s, $f, $nf, $fr)
+    }
+}
+
 impl Timecode {
     pub fn new(h: isize, m: isize, s: isize, f: isize) -> Self {
         Timecode::new_with_framerate(h, m, s, f, 0, Framerate::Timestamp)
@@ -277,7 +283,6 @@ impl Timecode {
     }
 
     pub fn as_nanoseconds_with_framerate(&self, fr: &Framerate) -> isize {
-
         let mut nanos: isize = 0;
         let framerate = if fr.as_f64() != 0.0 {
             fr.as_f64()
@@ -286,7 +291,10 @@ impl Timecode {
             1.0
         };
 
-        nanos += self.nanoframes / framerate as isize;
+        if let Framerate::Interpolated(_f) = fr {
+            nanos += self.nanoframes / framerate as isize;
+        }
+
         nanos += ((self.frames as f64 / framerate) * 1000000000.0) as isize;
         nanos += self.seconds * (1e+9 as isize);
         nanos += self.minutes * (6e+10 as isize);
@@ -307,7 +315,6 @@ impl Timecode {
     // Utils
 
     pub fn get_lerp_time_between(&self, begin: &Timecode, end: &Timecode) -> f64 {
-
         // TODO: There should've be a much efficient way to do this.
         // But i think it'll work for now...
 
