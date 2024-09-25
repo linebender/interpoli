@@ -273,16 +273,21 @@ impl Timecode {
     }
 
     pub fn as_nanoseconds(&self) -> isize {
+        self.as_nanoseconds_with_framerate(&self.framerate)
+    }
+
+    pub fn as_nanoseconds_with_framerate(&self, fr: &Framerate) -> isize {
+
         let mut nanos: isize = 0;
-        let framerate = if self.framerate.as_f64() != 0.0 {
-            self.framerate.as_f64()
+        let framerate = if fr.as_f64() != 0.0 {
+            fr.as_f64()
         } else {
             // If it's a timestamp, cancel the division.
             1.0
         };
 
         nanos += self.nanoframes / framerate as isize;
-        nanos += (self.frames / framerate as isize) * 1_000_000;
+        nanos += ((self.frames as f64 / framerate) * 1000000000.0) as isize;
         nanos += self.seconds * (1e+9 as isize);
         nanos += self.minutes * (6e+10 as isize);
         nanos += self.hours * (3.6e+12 as isize);
@@ -307,14 +312,15 @@ impl Timecode {
         // But i think it'll work for now...
 
         let t = self.as_nanoseconds();
-        let a = begin.as_nanoseconds();
-        let b = end.as_nanoseconds();
+        let a = begin.as_nanoseconds_with_framerate(&self.framerate);
+        let b = end.as_nanoseconds_with_framerate(&self.framerate);
 
+        let a_f64 = a as f64;
         let b_f64 = b as f64;
         let t_f64 = t as f64;
 
-        let lerp = a + (b - a);
-        let res = (lerp as f64 * (t_f64 / b_f64)) / b_f64;
+        let lerp = a_f64 + (b_f64 - a_f64) * (t_f64 / b_f64);
+        let res = lerp / b_f64;
 
         res
     }
@@ -322,4 +328,16 @@ impl Timecode {
 
 pub struct Timeline {
     time: Timecode,
+}
+
+impl Timeline {
+    pub fn new(fr: Framerate) -> Self {
+        Self {
+            time: tcode_hmsf_framerate!(00:00:00:00, fr),
+        }
+    }
+
+    pub fn time(&self) -> &Timecode {
+        &self.time
+    }
 }
