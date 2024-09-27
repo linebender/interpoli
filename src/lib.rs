@@ -355,7 +355,7 @@ fn tline_set_by_timestamp() {
 
 #[test]
 fn ttree_get_and_create_hour() {
-    let mut tree = Timetree::new();
+    let mut tree = Timetree::<f64>::new();
 
     assert!(tree.create_hour_with_timestamp(&tcode_hmsf!(01:00:00:00)).is_some());
     assert!(tree.create_hour_with_isize(&2).is_some());
@@ -368,7 +368,7 @@ fn ttree_get_and_create_hour() {
 
 #[test]
 fn ttree_get_or_create_hour() {
-    let mut tree = Timetree::new();
+    let mut tree = Timetree::<f64>::new();
 
     assert!(tree.get_or_create_hour_with_isize(&2).is_some());
     assert!(tree.get_or_create_hour_with_timestamp(&tcode_hmsf!(03:00:00:00)).is_some());
@@ -379,10 +379,8 @@ fn ttree_get_or_create_hour() {
 #[test]
 fn ttree_add_keyframe_at_timestamp() {
 
-    let mut tree = Timetree::new();
+    let mut tree = Timetree::<f64>::new();
 
-    assert!(tree.add_keyframe_at_timestamp(Keyframe::default(), &tcode_hmsf!(00:00:05:00)).is_some());
-    assert!(tree.add_keyframe_at_timestamp(Keyframe::default(), &tcode_hmsf!(00:00:10:00)).is_some());
-
-    dbg!(tree);
+    assert!(tree.add_keyframe_at_timestamp(Keyframe { value: 0.5 }, &tcode_hmsf!(00:00:05:00)).is_some());
+    assert!(tree.add_keyframe_at_timestamp(Keyframe { value: 1.0 }, &tcode_hmsf!(00:00:10:00)).is_some());
 }

@@ -400,11 +400,11 @@ impl Timeline {
 }
 
 #[derive(Debug)]
-pub struct Timetree {
-    tree: BTreeMap<isize, HourLeaf>,
+pub struct Timetree<T> {
+    tree: BTreeMap<isize, HourLeaf<T>>,
 }
 
-impl Timetree {
+impl<T> Timetree<T> {
     pub fn new() -> Self {
         Self {
             tree: BTreeMap::new(),
@@ -414,28 +414,28 @@ impl Timetree {
     // Create and get hour
 
     #[inline]
-    pub fn create_hour_with_isize(&mut self, hour: &isize) -> Option<&mut HourLeaf> {
-        self.tree.insert(*hour, HourLeaf::default());
+    pub fn create_hour_with_isize(&mut self, hour: &isize) -> Option<&mut HourLeaf<T>> {
+        self.tree.insert(*hour, HourLeaf::<T>::new());
         self.get_hour_with_isize(hour)
     }
 
     #[inline]
-    pub fn create_hour_with_timestamp(&mut self, time: &Timecode) -> Option<&mut HourLeaf> {
+    pub fn create_hour_with_timestamp(&mut self, time: &Timecode) -> Option<&mut HourLeaf<T>> {
         self.create_hour_with_isize(time.hours())
     }
 
     #[inline]
-    pub fn get_hour_with_isize(&mut self, hour: &isize) -> Option<&mut HourLeaf> {
+    pub fn get_hour_with_isize(&mut self, hour: &isize) -> Option<&mut HourLeaf<T>> {
         self.tree.get_mut(hour)
     }
 
     #[inline]
-    pub fn get_hour_with_timestamp(&mut self, time: &Timecode) -> Option<&mut HourLeaf> {
+    pub fn get_hour_with_timestamp(&mut self, time: &Timecode) -> Option<&mut HourLeaf<T>> {
         self.get_hour_with_isize(time.hours())
     }
 
     #[inline]
-    pub fn get_or_create_hour_with_isize(&mut self, hour: &isize) -> Option<&mut HourLeaf> {
+    pub fn get_or_create_hour_with_isize(&mut self, hour: &isize) -> Option<&mut HourLeaf<T>> {
         if self.get_hour_with_isize(hour).is_none() {
             return self.create_hour_with_isize(&hour);
         }
@@ -444,26 +444,26 @@ impl Timetree {
     }
 
     #[inline]
-    pub fn get_or_create_hour_with_timestamp(&mut self, time: &Timecode) -> Option<&mut HourLeaf> {
+    pub fn get_or_create_hour_with_timestamp(&mut self, time: &Timecode) -> Option<&mut HourLeaf<T>> {
         self.get_or_create_hour_with_isize(time.hours())
     }
 
-    pub fn add_keyframe_at_timestamp(&mut self, key: Keyframe, time: &Timecode) -> Option<&mut Keyframe> {
-        let mut hour: &mut HourLeaf = self.get_or_create_hour_with_timestamp(time).unwrap();
-        let mut minute: &mut MinuteLeaf = hour.get_or_create_minute_with_timestamp(time).unwrap();
-        let mut second: &mut SecondLeaf = minute.get_or_create_second_with_timestamp(time).unwrap();
-        let mut frame: &mut FrameLeaf = second.get_or_create_frame_with_timestamp(time).unwrap();
+    pub fn add_keyframe_at_timestamp(&mut self, key: Keyframe<T>, time: &Timecode) -> Option<&mut Keyframe<T>> {
+        let mut hour: &mut HourLeaf<T> = self.get_or_create_hour_with_timestamp(time).unwrap();
+        let mut minute: &mut MinuteLeaf<T> = hour.get_or_create_minute_with_timestamp(time).unwrap();
+        let mut second: &mut SecondLeaf<T> = minute.get_or_create_second_with_timestamp(time).unwrap();
+        let mut frame: &mut FrameLeaf<T> = second.get_or_create_frame_with_timestamp(time).unwrap();
 
         frame.add_keyframe_at_timestamp(time, key)
     }
 }
 
-#[derive(Debug, Default)]
-pub struct HourLeaf {
-    minutes: BTreeMap<isize, MinuteLeaf>,
+#[derive(Debug)]
+pub struct HourLeaf<T> {
+    minutes: BTreeMap<isize, MinuteLeaf<T>>,
 }
 
-impl HourLeaf {
+impl<T> HourLeaf<T> {
     pub fn new() -> Self {
         Self {
             minutes: BTreeMap::new(),
@@ -473,28 +473,28 @@ impl HourLeaf {
     // Create and get minute
 
     #[inline]
-    pub fn create_minute_with_isize(&mut self, minute: &isize) -> Option<&mut MinuteLeaf> {
-        self.minutes.insert(*minute, MinuteLeaf::default());
+    pub fn create_minute_with_isize(&mut self, minute: &isize) -> Option<&mut MinuteLeaf<T>> {
+        self.minutes.insert(*minute, MinuteLeaf::<T>::new());
         self.get_minute_with_isize(minute)
     }
 
     #[inline]
-    pub fn create_minute_with_timestamp(&mut self, time: &Timecode) -> Option<&mut MinuteLeaf> {
+    pub fn create_minute_with_timestamp(&mut self, time: &Timecode) -> Option<&mut MinuteLeaf<T>> {
         self.create_minute_with_isize(time.minutes())
     }
 
     #[inline]
-    pub fn get_minute_with_isize(&mut self, minute: &isize) -> Option<&mut MinuteLeaf> {
+    pub fn get_minute_with_isize(&mut self, minute: &isize) -> Option<&mut MinuteLeaf<T>> {
         self.minutes.get_mut(minute)
     }
 
     #[inline]
-    pub fn get_minute_with_timestamp(&mut self, time: &Timecode) -> Option<&mut MinuteLeaf> {
+    pub fn get_minute_with_timestamp(&mut self, time: &Timecode) -> Option<&mut MinuteLeaf<T>> {
         self.get_minute_with_isize(time.minutes())
     }
 
     #[inline]
-    pub fn get_or_create_minute_with_isize(&mut self, minute: &isize) -> Option<&mut MinuteLeaf> {
+    pub fn get_or_create_minute_with_isize(&mut self, minute: &isize) -> Option<&mut MinuteLeaf<T>> {
         if self.get_minute_with_isize(minute).is_none() {
             return self.create_minute_with_isize(&minute);
         }
@@ -503,17 +503,17 @@ impl HourLeaf {
     }
 
     #[inline]
-    pub fn get_or_create_minute_with_timestamp(&mut self, time: &Timecode) -> Option<&mut MinuteLeaf> {
+    pub fn get_or_create_minute_with_timestamp(&mut self, time: &Timecode) -> Option<&mut MinuteLeaf<T>> {
         self.get_or_create_minute_with_isize(time.minutes())
     }
 }
 
-#[derive(Debug, Default)]
-pub struct MinuteLeaf {
-    seconds: BTreeMap<isize, SecondLeaf>,
+#[derive(Debug)]
+pub struct MinuteLeaf<T> {
+    seconds: BTreeMap<isize, SecondLeaf<T>>,
 }
 
-impl MinuteLeaf {
+impl<T> MinuteLeaf<T> {
     pub fn new() -> Self {
         Self {
             seconds: BTreeMap::new(),
@@ -523,28 +523,28 @@ impl MinuteLeaf {
     // Create and get second
 
     #[inline]
-    pub fn create_second_with_isize(&mut self, second: &isize) -> Option<&mut SecondLeaf> {
-        self.seconds.insert(*second, SecondLeaf::default());
+    pub fn create_second_with_isize(&mut self, second: &isize) -> Option<&mut SecondLeaf<T>> {
+        self.seconds.insert(*second, SecondLeaf::<T>::new());
         self.get_second_with_isize(second)
     }
 
     #[inline]
-    pub fn create_second_with_timestamp(&mut self, time: &Timecode) -> Option<&mut SecondLeaf> {
+    pub fn create_second_with_timestamp(&mut self, time: &Timecode) -> Option<&mut SecondLeaf<T>> {
         self.create_second_with_isize(time.seconds())
     }
 
     #[inline]
-    pub fn get_second_with_isize(&mut self, second: &isize) -> Option<&mut SecondLeaf> {
+    pub fn get_second_with_isize(&mut self, second: &isize) -> Option<&mut SecondLeaf<T>> {
         self.seconds.get_mut(second)
     }
 
     #[inline]
-    pub fn get_second_with_timestamp(&mut self, time: &Timecode) -> Option<&mut SecondLeaf> {
+    pub fn get_second_with_timestamp(&mut self, time: &Timecode) -> Option<&mut SecondLeaf<T>> {
         self.get_second_with_isize(time.seconds())
     }
 
     #[inline]
-    pub fn get_or_create_second_with_isize(&mut self, second: &isize) -> Option<&mut SecondLeaf> {
+    pub fn get_or_create_second_with_isize(&mut self, second: &isize) -> Option<&mut SecondLeaf<T>> {
         if self.get_second_with_isize(second).is_none() {
             return self.create_second_with_isize(&second);
         }
@@ -553,17 +553,17 @@ impl MinuteLeaf {
     }
 
     #[inline]
-    pub fn get_or_create_second_with_timestamp(&mut self, time: &Timecode) -> Option<&mut SecondLeaf> {
+    pub fn get_or_create_second_with_timestamp(&mut self, time: &Timecode) -> Option<&mut SecondLeaf<T>> {
         self.get_or_create_second_with_isize(time.seconds())
     }
 }
 
-#[derive(Debug, Default)]
-pub struct SecondLeaf {
-    frames: BTreeMap<isize, FrameLeaf>,
+#[derive(Debug)]
+pub struct SecondLeaf<T> {
+    frames: BTreeMap<isize, FrameLeaf<T>>,
 }
 
-impl SecondLeaf {
+impl<T> SecondLeaf<T> {
     pub fn new() -> Self {
         Self {
             frames: BTreeMap::new(),
@@ -573,28 +573,28 @@ impl SecondLeaf {
     // Create and get frame
 
     #[inline]
-    pub fn create_frame_with_isize(&mut self, frame: &isize) -> Option<&mut FrameLeaf> {
-        self.frames.insert(*frame, FrameLeaf::default());
+    pub fn create_frame_with_isize(&mut self, frame: &isize) -> Option<&mut FrameLeaf<T>> {
+        self.frames.insert(*frame, FrameLeaf::<T>::new());
         self.get_frame_with_isize(frame)
     }
 
     #[inline]
-    pub fn create_frame_with_timestamp(&mut self, time: &Timecode) -> Option<&mut FrameLeaf> {
+    pub fn create_frame_with_timestamp(&mut self, time: &Timecode) -> Option<&mut FrameLeaf<T>> {
         self.create_frame_with_isize(time.frames())
     }
 
     #[inline]
-    pub fn get_frame_with_isize(&mut self, frame: &isize) -> Option<&mut FrameLeaf> {
+    pub fn get_frame_with_isize(&mut self, frame: &isize) -> Option<&mut FrameLeaf<T>> {
         self.frames.get_mut(frame)
     }
 
     #[inline]
-    pub fn get_frame_with_timestamp(&mut self, time: &Timecode) -> Option<&mut FrameLeaf> {
+    pub fn get_frame_with_timestamp(&mut self, time: &Timecode) -> Option<&mut FrameLeaf<T>> {
         self.get_frame_with_isize(time.frames())
     }
 
     #[inline]
-    pub fn get_or_create_frame_with_isize(&mut self, frame: &isize) -> Option<&mut FrameLeaf> {
+    pub fn get_or_create_frame_with_isize(&mut self, frame: &isize) -> Option<&mut FrameLeaf<T>> {
         if self.get_frame_with_isize(frame).is_none() {
             return self.create_frame_with_isize(&frame);
         }
@@ -603,39 +603,47 @@ impl SecondLeaf {
     }
 
     #[inline]
-    pub fn get_or_create_frame_with_timestamp(&mut self, time: &Timecode) -> Option<&mut FrameLeaf> {
+    pub fn get_or_create_frame_with_timestamp(&mut self, time: &Timecode) -> Option<&mut FrameLeaf<T>> {
         self.get_or_create_frame_with_isize(time.frames())
     }
 }
 
-#[derive(Debug, Default)]
-pub struct FrameLeaf {
-    nanos: BTreeMap<isize, Keyframe>
+#[derive(Debug)]
+pub struct FrameLeaf<T> {
+    nanos: BTreeMap<isize, Keyframe<T>>
 }
 
-impl FrameLeaf {
+impl<T> FrameLeaf<T> {
+
+    pub fn new() -> Self {
+        Self {
+            nanos: BTreeMap::new(),
+        }
+    }
+
     #[inline]
-    pub fn add_keyframe_at_isize(&mut self, nanos: &isize, key: Keyframe) -> Option<&mut Keyframe> {
+    pub fn add_keyframe_at_isize(&mut self, nanos: &isize, key: Keyframe<T>) -> Option<&mut Keyframe<T>> {
         self.nanos.insert(*nanos, key);
         self.get_keyframe_at_isize(nanos)
     }
 
     #[inline]
-    pub fn add_keyframe_at_timestamp(&mut self, time: &Timecode, key: Keyframe) -> Option<&mut Keyframe> {
+    pub fn add_keyframe_at_timestamp(&mut self, time: &Timecode, key: Keyframe<T>) -> Option<&mut Keyframe<T>> {
         self.add_keyframe_at_isize(time.nanoframes(), key)
     }
 
     #[inline]
-    pub fn get_keyframe_at_isize(&mut self, frame: &isize) -> Option<&mut Keyframe> {
+    pub fn get_keyframe_at_isize(&mut self, frame: &isize) -> Option<&mut Keyframe<T>> {
         self.nanos.get_mut(frame)
     }
 
     #[inline]
-    pub fn get_keyframe_at_timestamp(&mut self, time: &Timecode) -> Option<&mut Keyframe> {
+    pub fn get_keyframe_at_timestamp(&mut self, time: &Timecode) -> Option<&mut Keyframe<T>> {
         self.get_keyframe_at_isize(time.nanoframes())
     }
 }
 
 #[derive(Debug, Default)]
-pub struct Keyframe {
+pub struct Keyframe<T> {
+    pub value: T,
 }
