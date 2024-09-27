@@ -24,11 +24,11 @@ pub use timeline::{Framerate, HourLeaf, Keyframe, Timecode, Timeline, Timetree};
 #[cfg(feature = "vello")]
 mod render;
 
-pub use composition::{Composition, Content, Draw, GroupTransform, Layer, Mask, Matte};
+pub use composition::{
+    Composition, Content, Draw, Geometry, GroupTransform, Layer, Mask, Matte, Shape,
+};
 
 pub use value::{Animated, Easing, EasingHandle, Time, Tween, Value, ValueRef};
-
-pub use kurbo::{PathEl, Shape};
 
 #[cfg(feature = "vello")]
 pub use render::Renderer;
@@ -89,33 +89,6 @@ impl Brush {
 impl Default for Transform {
     fn default() -> Self {
         Self::Fixed(Affine::IDENTITY)
-    }
-}
-
-#[derive(Clone, Debug)]
-pub enum Geometry {
-    Fixed(Vec<PathEl>),
-    Rect(animated::Rect),
-    Ellipse(animated::Ellipse),
-    Spline(animated::Spline),
-}
-
-impl Geometry {
-    pub fn evaluate(&self, frame: f64, path: &mut Vec<PathEl>) {
-        match self {
-            Self::Fixed(value) => {
-                path.extend_from_slice(value);
-            }
-            Self::Rect(value) => {
-                path.extend(value.evaluate(frame).path_elements(0.1));
-            }
-            Self::Ellipse(value) => {
-                path.extend(value.evaluate(frame).path_elements(0.1));
-            }
-            Self::Spline(value) => {
-                value.evaluate(frame, path);
-            }
-        }
     }
 }
 
