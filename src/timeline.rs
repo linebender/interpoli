@@ -1,6 +1,7 @@
 use std::time::Duration;
+use std::collections::BTreeMap;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Framerate {
     Timestamp,
     Fixed(f64),
@@ -39,7 +40,7 @@ impl Framerate {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Timecode {
     hours: isize,
     minutes: isize,
@@ -101,6 +102,10 @@ impl Timecode {
         t.correct_overflow();
 
         t
+    }
+
+    pub fn hours(&self) -> &isize {
+        &self.hours
     }
 
     fn correct_overflow(&mut self) {
@@ -347,4 +352,81 @@ impl Timeline {
     pub fn time(&self) -> &Timecode {
         &self.time
     }
+
+    pub fn add_by_duration(&mut self, d: Duration) {
+        self.time.add_by_duration(d);
+    }
+
+    pub fn sub_by_duration(&mut self, d: Duration) {
+        self.time.sub_by_duration(d);
+    }
+
+    pub fn set_by_duration(&mut self, d: Duration) {
+        self.time.set_by_duration(d);
+    }
+
+    pub fn add_by_timestamp(&mut self, t: Timecode) {
+        self.time.add_by_timestamp(t);
+    }
+
+    pub fn sub_by_timestamp(&mut self, t: Timecode) {
+        self.time.sub_by_timestamp(t);
+    }
+
+    pub fn set_by_timestamp(&mut self, t: Timecode) {
+        self.time.set_by_timestamp(t);
+    }
+}
+
+#[derive(Debug)]
+pub struct Timetree {
+    tree: BTreeMap<isize, HourLeaf>,
+}
+
+impl Timetree {
+    pub fn new() -> Self {
+        Self {
+            tree: BTreeMap::new(),
+        }
+    }
+
+    // Create and get hour (HH:..)
+
+    pub fn create_hour_with_isize(&mut self, hour: &isize) -> Option<&HourLeaf> {
+        self.tree.insert(*hour, HourLeaf::default());
+        self.get_hour_with_isize(hour)
+    }
+
+    pub fn create_hour_with_timestamp(&mut self, time: &Timecode) -> Option<&HourLeaf> {
+        self.create_hour_with_isize(time.hours())
+    }
+
+    pub fn get_hour_with_isize(&self, hour: &isize) -> Option<&HourLeaf> {
+        self.tree.get(hour)
+    }
+
+    pub fn get_hour_with_timestamp(&self, time: &Timecode) -> Option<&HourLeaf> {
+        self.get_hour_with_isize(time.hours())
+    }
+
+    pub fn get_or_create_hour_with_isize(&mut self, hour: &isize) -> Option<&HourLeaf> {
+        if self.get_hour_with_isize(hour).is_none() {
+            return self.create_hour_with_isize(&hour);
+        }
+
+        self.get_hour_with_isize(hour)
+    }
+
+    pub fn get_or_create_hour_with_timestamp(&mut self, time: &Timecode) -> Option<&HourLeaf> {
+        self.get_or_create_hour_with_isize(time.hours())
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct HourLeaf {
+    minute: BTreeMap<isize, MinuteLeaf>,
+}
+
+#[derive(Debug, Default)]
+pub struct MinuteLeaf {
 }

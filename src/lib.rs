@@ -19,7 +19,7 @@ pub mod timeline;
 pub mod animated;
 pub mod fixed;
 
-pub use timeline::{Framerate, Timecode, Timeline};
+pub use timeline::{Framerate, Timecode, Timeline, Timetree, HourLeaf};
 
 #[cfg(feature = "vello")]
 mod render;
@@ -342,4 +342,36 @@ fn tline_new() {
     let timeline = Timeline::new(Framerate::Fixed(24.0));
 
     assert!(timeline.time().is_equals_to_hmsf(&tcode_hmsf!(00:00:00:00)));
+}
+
+#[test]
+fn tline_set_by_timestamp() {
+    let mut timeline = Timeline::new(Framerate::Fixed(24.0));
+
+    timeline.set_by_timestamp(tcode_hmsf!(00:00:05:00));
+
+    assert!(timeline.time().is_equals_to_hmsf(&tcode_hmsf!(00:00:05:00)));
+}
+
+#[test]
+fn ttree_get_and_create_hour() {
+    let mut tree = Timetree::new();
+
+    assert!(tree.create_hour_with_timestamp(&tcode_hmsf!(01:00:00:00)).is_some());
+    assert!(tree.create_hour_with_isize(&2).is_some());
+
+    assert!(tree.get_hour_with_isize(&1).is_some());
+    assert!(tree.get_hour_with_timestamp(&tcode_hmsf!(02:00:00:00)).is_some());
+
+    assert!(tree.get_hour_with_timestamp(&tcode_hmsf!(03:00:00:00)).is_none());
+}
+
+#[test]
+fn ttree_get_or_create_hour() {
+    let mut tree = Timetree::new();
+
+    assert!(tree.get_or_create_hour_with_isize(&2).is_some());
+    assert!(tree.get_or_create_hour_with_timestamp(&tcode_hmsf!(03:00:00:00)).is_some());
+
+    assert!(tree.get_hour_with_timestamp(&tcode_hmsf!(01:00:00:00)).is_none());
 }
