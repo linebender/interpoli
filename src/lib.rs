@@ -19,7 +19,7 @@ pub mod timeline;
 pub mod animated;
 pub mod fixed;
 
-pub use timeline::{Framerate, Timecode, Timeline, Timetree, HourLeaf, Keyframe};
+pub use timeline::{Framerate, HourLeaf, Keyframe, Timecode, Timeline, Timetree};
 
 #[cfg(feature = "vello")]
 mod render;
@@ -333,7 +333,10 @@ fn tcode_lerp_fixed_vs_inter() {
     let fixed_result = time_fixed.get_lerp_time_between(&begin, &end);
     let inter_result = time_inter.get_lerp_time_between(&begin, &end);
 
-    println!("tcode_lerp_fixed_vs_inter: fixed {:?} | interpolated {:?}", fixed_result, inter_result);
+    println!(
+        "tcode_lerp_fixed_vs_inter: fixed {:?} | interpolated {:?}",
+        fixed_result, inter_result
+    );
     assert!(fixed_result == 0.0 && inter_result == 0.5);
 }
 
@@ -357,13 +360,19 @@ fn tline_set_by_timestamp() {
 fn ttree_get_and_create_hour() {
     let mut tree = Timetree::<f64>::new();
 
-    assert!(tree.create_hour_with_timestamp(&tcode_hmsf!(01:00:00:00)).is_some());
+    assert!(tree
+        .create_hour_with_timestamp(&tcode_hmsf!(01:00:00:00))
+        .is_some());
     assert!(tree.create_hour_with_isize(&2).is_some());
 
     assert!(tree.get_hour_with_isize(&1).is_some());
-    assert!(tree.get_hour_with_timestamp(&tcode_hmsf!(02:00:00:00)).is_some());
+    assert!(tree
+        .get_hour_with_timestamp(&tcode_hmsf!(02:00:00:00))
+        .is_some());
 
-    assert!(tree.get_hour_with_timestamp(&tcode_hmsf!(03:00:00:00)).is_none());
+    assert!(tree
+        .get_hour_with_timestamp(&tcode_hmsf!(03:00:00:00))
+        .is_none());
 }
 
 #[test]
@@ -371,16 +380,23 @@ fn ttree_get_or_create_hour() {
     let mut tree = Timetree::<f64>::new();
 
     assert!(tree.get_or_create_hour_with_isize(&2).is_some());
-    assert!(tree.get_or_create_hour_with_timestamp(&tcode_hmsf!(03:00:00:00)).is_some());
+    assert!(tree
+        .get_or_create_hour_with_timestamp(&tcode_hmsf!(03:00:00:00))
+        .is_some());
 
-    assert!(tree.get_hour_with_timestamp(&tcode_hmsf!(01:00:00:00)).is_none());
+    assert!(tree
+        .get_hour_with_timestamp(&tcode_hmsf!(01:00:00:00))
+        .is_none());
 }
 
 #[test]
 fn ttree_add_keyframe_at_timestamp() {
-
     let mut tree = Timetree::<f64>::new();
 
-    assert!(tree.add_keyframe_at_timestamp(Keyframe { value: 0.5 }, &tcode_hmsf!(00:00:05:00)).is_some());
-    assert!(tree.add_keyframe_at_timestamp(Keyframe { value: 1.0 }, &tcode_hmsf!(00:00:10:00)).is_some());
+    assert!(tree
+        .add_keyframe_at_timestamp(Keyframe { value: 0.5 }, &tcode_hmsf!(00:00:05:00))
+        .is_some());
+    assert!(tree
+        .add_keyframe_at_timestamp(Keyframe { value: 1.0 }, &tcode_hmsf!(00:00:10:00))
+        .is_some());
 }
