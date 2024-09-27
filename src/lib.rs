@@ -19,7 +19,7 @@ pub mod timeline;
 pub mod animated;
 pub mod fixed;
 
-pub use timeline::{Framerate, Timecode, Timeline, Timetree, HourLeaf};
+pub use timeline::{Framerate, Timecode, Timeline, Timetree, HourLeaf, Keyframe};
 
 #[cfg(feature = "vello")]
 mod render;
@@ -374,4 +374,15 @@ fn ttree_get_or_create_hour() {
     assert!(tree.get_or_create_hour_with_timestamp(&tcode_hmsf!(03:00:00:00)).is_some());
 
     assert!(tree.get_hour_with_timestamp(&tcode_hmsf!(01:00:00:00)).is_none());
+}
+
+#[test]
+fn ttree_add_keyframe_at_timestamp() {
+
+    let mut tree = Timetree::new();
+
+    assert!(tree.add_keyframe_at_timestamp(Keyframe::default(), &tcode_hmsf!(00:00:05:00)).is_some());
+    assert!(tree.add_keyframe_at_timestamp(Keyframe::default(), &tcode_hmsf!(00:00:10:00)).is_some());
+
+    dbg!(tree);
 }
