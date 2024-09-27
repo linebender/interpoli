@@ -393,17 +393,17 @@ impl Timeline {
 }
 
 #[derive(Debug)]
-pub struct Timetree<T> {
+pub struct Sequence<T> {
     tree: BTreeMap<isize, HourLeaf<T>>,
 }
 
-impl<T> Default for Timetree<T> {
+impl<T> Default for Sequence<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> Timetree<T> {
+impl<T> Sequence<T> {
     pub fn new() -> Self {
         Self {
             tree: BTreeMap::new(),

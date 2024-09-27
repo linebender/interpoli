@@ -19,7 +19,7 @@ pub mod timeline;
 pub mod animated;
 pub mod fixed;
 
-pub use timeline::{Framerate, HourLeaf, Keyframe, Timecode, Timeline, Timetree};
+pub use timeline::{Framerate, HourLeaf, Keyframe, Timecode, Timeline, Sequence};
 
 #[cfg(feature = "vello")]
 mod render;
@@ -129,7 +129,7 @@ fn tcode_macro_overflow() {
 fn tcode_full_24fps_second() {
     let mut time = tcode_hmsf_framerate!(00:00:00:00, Framerate::Fixed(24.0));
 
-    for i in 0..24 {
+    for _i in 0..24 {
         time.next_frame();
     }
 
@@ -141,7 +141,7 @@ fn tcode_full_24fps_second() {
 fn tcode_full_24fps_minute() {
     let mut time = tcode_hmsf_framerate!(00:00:00:00, Framerate::Fixed(24.0));
 
-    for i in 0..60 {
+    for _i in 0..60 {
         time.next_second();
     }
 
@@ -153,7 +153,7 @@ fn tcode_full_24fps_minute() {
 fn tcode_full_24fps_hour() {
     let mut time = tcode_hmsf_framerate!(00:00:00:00, Framerate::Fixed(24.0));
 
-    for i in 0..60 {
+    for _i in 0..60 {
         time.next_minute();
     }
 
@@ -330,46 +330,46 @@ fn tline_set_by_timestamp() {
 }
 
 #[test]
-fn ttree_get_and_create_hour() {
-    let mut tree = Timetree::<f64>::new();
+fn sequence_get_and_create_hour() {
+    let mut seq = Sequence::<f64>::new();
 
-    assert!(tree
+    assert!(seq
         .create_hour_with_timestamp(&tcode_hmsf!(01:00:00:00))
         .is_some());
-    assert!(tree.create_hour_with_isize(&2).is_some());
+    assert!(seq.create_hour_with_isize(&2).is_some());
 
-    assert!(tree.get_hour_with_isize(&1).is_some());
-    assert!(tree
+    assert!(seq.get_hour_with_isize(&1).is_some());
+    assert!(seq
         .get_hour_with_timestamp(&tcode_hmsf!(02:00:00:00))
         .is_some());
 
-    assert!(tree
+    assert!(seq
         .get_hour_with_timestamp(&tcode_hmsf!(03:00:00:00))
         .is_none());
 }
 
 #[test]
-fn ttree_get_or_create_hour() {
-    let mut tree = Timetree::<f64>::new();
+fn sequence_get_or_create_hour() {
+    let mut seq = Sequence::<f64>::new();
 
-    assert!(tree.get_or_create_hour_with_isize(&2).is_some());
-    assert!(tree
+    assert!(seq.get_or_create_hour_with_isize(&2).is_some());
+    assert!(seq
         .get_or_create_hour_with_timestamp(&tcode_hmsf!(03:00:00:00))
         .is_some());
 
-    assert!(tree
+    assert!(seq
         .get_hour_with_timestamp(&tcode_hmsf!(01:00:00:00))
         .is_none());
 }
 
 #[test]
-fn ttree_add_keyframe_at_timestamp() {
-    let mut tree = Timetree::<f64>::new();
+fn sequence_add_keyframe_at_timestamp() {
+    let mut seq = Sequence::<f64>::new();
 
-    assert!(tree
+    assert!(seq
         .add_keyframe_at_timestamp(Keyframe { value: 0.5 }, &tcode_hmsf!(00:00:05:00))
         .is_some());
-    assert!(tree
+    assert!(seq
         .add_keyframe_at_timestamp(Keyframe { value: 1.0 }, &tcode_hmsf!(00:00:10:00))
         .is_some());
 }
