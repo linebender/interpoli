@@ -21,6 +21,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5c6cb57a04249c6480766f7f7cef5467412af1490f8d1e243141daddada3264f"
 
 [[package]]
+name = "anymap"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "33954243bd79057c2de7338850b85983a44588021f8a5fee574a8888c6de4344"
+
+[[package]]
 name = "arrayvec"
 version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -170,6 +176,7 @@ dependencies = [
 name = "interpoli"
 version = "0.1.0"
 dependencies = [
+ "anymap",
  "hashbrown",
  "keyframe",
  "kurbo",

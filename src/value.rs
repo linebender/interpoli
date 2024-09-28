@@ -3,6 +3,7 @@
 
 use alloc::vec::Vec;
 use peniko::{self, kurbo};
+use std::fmt::Debug;
 
 /// Fixed or animated value.
 #[derive(Clone, Debug)]
@@ -155,7 +156,7 @@ impl<T: Tween> Animated<T> {
 }
 
 /// Something that can be interpolated with an easing function.
-pub trait Tween: Clone + Default {
+pub trait Tween: Debug + Clone + Default {
     fn tween(&self, other: &Self, t: f64, easing: &Easing) -> Self;
 }
 

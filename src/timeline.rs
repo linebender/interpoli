@@ -1,3 +1,6 @@
+use crate::Tween;
+use anymap::AnyMap;
+use core::any::Any;
 use std::collections::BTreeMap;
 use std::time::Duration;
 
@@ -354,13 +357,26 @@ impl Timecode {
 #[derive(Debug)]
 pub struct Timeline {
     time: Timecode,
+    sequences: AnyMap,
 }
 
 impl Timeline {
     pub fn new(fr: Framerate) -> Self {
         Self {
             time: tcode_hmsf_framerate!(00:00:00:00, fr),
+            sequences: AnyMap::new(),
         }
+    }
+
+    pub fn new_sequence<T: 'static>(&mut self, seq: Sequence<T>) -> Option<&mut Sequence<T>> {
+        if self.sequences.get::<Vec<Sequence<T>>>().is_none() {
+            self.sequences.insert(Vec::<Sequence<T>>::new());
+        }
+
+        let mut seq_list = self.sequences.get_mut::<Vec<Sequence<T>>>().unwrap();
+        seq_list.push(seq);
+
+        seq_list.last_mut()
     }
 
     pub fn time(&self) -> &Timecode {
@@ -464,6 +480,15 @@ impl<T> Sequence<T> {
         let frame: &mut FrameLeaf<T> = second.get_or_create_frame_with_timestamp(time).unwrap();
 
         frame.add_keyframe_at_timestamp(time, key)
+    }
+
+    /// # Panics
+    ///
+    /// TODO!
+    pub fn add_keyframes_at_timestamp(&mut self, keyframes: Vec<(Keyframe<T>, &Timecode)>) {
+        for k in keyframes {
+            self.add_keyframe_at_timestamp(k.0, k.1);
+        }
     }
 }
 

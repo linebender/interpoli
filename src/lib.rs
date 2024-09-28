@@ -19,7 +19,7 @@ pub mod timeline;
 pub mod animated;
 pub mod fixed;
 
-pub use timeline::{Framerate, HourLeaf, Keyframe, Timecode, Timeline, Sequence};
+pub use timeline::{Framerate, HourLeaf, Keyframe, Sequence, Timecode, Timeline};
 
 #[cfg(feature = "vello")]
 mod render;
@@ -327,6 +327,23 @@ fn tline_set_by_timestamp() {
     timeline.set_by_timestamp(tcode_hmsf!(00:00:05:00));
 
     assert!(timeline.time().is_equals_to_hmsf(&tcode_hmsf!(00:00:05:00)));
+}
+
+#[test]
+fn tline_new_sequence() {
+    let mut timeline = Timeline::new(Framerate::Fixed(24.0));
+
+    let mut sequence_one: &mut Sequence<i64> = timeline.new_sequence(Sequence::new()).unwrap();
+
+    assert!(sequence_one
+        .add_keyframe_at_timestamp(Keyframe { value: 3 }, &tcode_hmsf!(00:00:05:00))
+        .is_some());
+
+    let mut sequence_two: &mut Sequence<i32> = timeline.new_sequence(Sequence::new()).unwrap();
+    
+    assert!(sequence_two
+        .add_keyframe_at_timestamp(Keyframe { value: 6 }, &tcode_hmsf!(00:00:10:00))
+        .is_some());
 }
 
 #[test]
