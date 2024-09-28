@@ -381,6 +381,25 @@ fn tline_new_kurbo_sequences() {
 }
 
 #[test]
+fn tline_nesting() {
+    use kurbo::Vec2;
+
+    let mut main = Timeline::new(Framerate::Fixed(24.0));
+
+    let mut main_seq: &mut Sequence<f64> = main.new_sequence().unwrap();
+    main_seq.add_keyframe_at_timestamp(Keyframe { value: 0.0 }, &tcode_hmsf!(00:00:02:00));
+
+    let mut child = Timeline::new(Framerate::Fixed(24.0));
+
+    let mut child_seq: &mut Sequence<Vec2> = child.new_sequence().unwrap();
+    child_seq.add_keyframe_at_timestamp(Keyframe { value: Vec2::new(0.0, 1.0) }, &tcode_hmsf!(00:00:02:00));
+
+    main.add_child(child);
+
+    assert!(main.children().len() == 1);
+}
+
+#[test]
 fn sequence_get_and_create_hour() {
     let mut seq = Sequence::<f64>::new();
 

@@ -1,6 +1,5 @@
 use crate::Tween;
 use anymap::AnyMap;
-use core::any::Any;
 use std::collections::BTreeMap;
 use std::time::Duration;
 
@@ -358,6 +357,7 @@ impl Timecode {
 pub struct Timeline {
     time: Timecode,
     sequences: AnyMap,
+    children: Vec<Timeline>,
 }
 
 impl Timeline {
@@ -365,6 +365,7 @@ impl Timeline {
         Self {
             time: tcode_hmsf_framerate!(00:00:00:00, fr),
             sequences: AnyMap::new(),
+            children: Vec::new(),
         }
     }
 
@@ -377,6 +378,18 @@ impl Timeline {
         seq_list.push(Sequence::<T>::new());
 
         seq_list.last_mut()
+    }
+
+    pub fn add_child(&mut self, child: Timeline) {
+        self.children.push(child);
+    }
+
+    pub fn get_child_mut(&mut self, id: usize) -> Option<&mut Timeline> {
+        self.children.get_mut(id)
+    }
+
+    pub fn children(&self) -> &Vec<Timeline> {
+        &self.children
     }
 
     pub fn time(&self) -> &Timecode {
