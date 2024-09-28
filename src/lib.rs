@@ -330,19 +330,53 @@ fn tline_set_by_timestamp() {
 }
 
 #[test]
-fn tline_new_sequence() {
+fn tline_new_integer_sequences() {
     let mut timeline = Timeline::new(Framerate::Fixed(24.0));
 
-    let mut sequence_one: &mut Sequence<i64> = timeline.new_sequence().unwrap();
+    let mut sequence_one: &mut Sequence<f64> = timeline.new_sequence().unwrap();
 
     assert!(sequence_one
-        .add_keyframe_at_timestamp(Keyframe { value: 3 }, &tcode_hmsf!(00:00:05:00))
+        .add_keyframe_at_timestamp(Keyframe { value: 3.0 }, &tcode_hmsf!(00:00:05:00))
         .is_some());
 
-    let mut sequence_two: &mut Sequence<i32> = timeline.new_sequence().unwrap();
+    let mut sequence_two: &mut Sequence<f32> = timeline.new_sequence().unwrap();
 
     assert!(sequence_two
-        .add_keyframe_at_timestamp(Keyframe { value: 6 }, &tcode_hmsf!(00:00:10:00))
+        .add_keyframe_at_timestamp(Keyframe { value: 6.0 }, &tcode_hmsf!(00:00:10:00))
+        .is_some());
+}
+
+#[test]
+fn tline_new_kurbo_sequences() {
+    use kurbo::Vec2;
+
+    let mut timeline = Timeline::new(Framerate::Fixed(24.0));
+
+    let mut sequence: &mut Sequence<Vec2> = timeline.new_sequence().unwrap();
+
+    sequence.add_keyframes_at_timestamp(vec![
+        (
+            Keyframe {
+                value: Vec2::new(0.0, 1.0),
+            },
+            &tcode_hmsf!(00:00:01:00),
+        ),
+        (
+            Keyframe {
+                value: Vec2::new(1.0, 1.0),
+            },
+            &tcode_hmsf!(00:00:02:00),
+        ),
+        (
+            Keyframe {
+                value: Vec2::new(1.0, 2.0),
+            },
+            &tcode_hmsf!(00:00:03:00),
+        ),
+    ]);
+
+    assert!(sequence
+        .get_keyframe_at_timestamp(&tcode_hmsf!(00:00:02:00))
         .is_some());
 }
 

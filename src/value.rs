@@ -178,6 +178,13 @@ impl Tween for f64 {
     }
 }
 
+impl Tween for f32 {
+    fn tween(&self, other: &Self, t: f64, _easing: &Easing) -> Self {
+        // Same TODO as f64
+        keyframe::ease(keyframe::functions::Linear, *self, *other, t)
+    }
+}
+
 impl Tween for kurbo::Point {
     fn tween(&self, other: &Self, t: f64, easing: &Easing) -> Self {
         Self::new(

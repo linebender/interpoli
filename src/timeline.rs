@@ -368,7 +368,7 @@ impl Timeline {
         }
     }
 
-    pub fn new_sequence<T: 'static>(&mut self) -> Option<&mut Sequence<T>> {
+    pub fn new_sequence<T: Tween + 'static>(&mut self) -> Option<&mut Sequence<T>> {
         if self.sequences.get::<Vec<Sequence<T>>>().is_none() {
             self.sequences.insert(Vec::<Sequence<T>>::new());
         }
@@ -409,17 +409,17 @@ impl Timeline {
 }
 
 #[derive(Debug)]
-pub struct Sequence<T> {
+pub struct Sequence<T: Tween> {
     tree: BTreeMap<isize, HourLeaf<T>>,
 }
 
-impl<T> Default for Sequence<T> {
+impl<T: Tween> Default for Sequence<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> Sequence<T> {
+impl<T: Tween> Sequence<T> {
     pub fn new() -> Self {
         Self {
             tree: BTreeMap::new(),
@@ -474,12 +474,28 @@ impl<T> Sequence<T> {
         key: Keyframe<T>,
         time: &Timecode,
     ) -> Option<&mut Keyframe<T>> {
+        // TODO: Make it so it returns 'None' instead of panicking.
+
         let hour: &mut HourLeaf<T> = self.get_or_create_hour_with_timestamp(time).unwrap();
         let minute: &mut MinuteLeaf<T> = hour.get_or_create_minute_with_timestamp(time).unwrap();
         let second: &mut SecondLeaf<T> = minute.get_or_create_second_with_timestamp(time).unwrap();
         let frame: &mut FrameLeaf<T> = second.get_or_create_frame_with_timestamp(time).unwrap();
 
         frame.add_keyframe_at_timestamp(time, key)
+    }
+
+    /// # Panics
+    ///
+    /// TODO!
+    pub fn get_keyframe_at_timestamp(&mut self, time: &Timecode) -> Option<&mut Keyframe<T>> {
+        // TODO: Make it so it returns 'None' instead of panicking.
+
+        let hour: &mut HourLeaf<T> = self.get_hour_with_timestamp(time).unwrap();
+        let minute: &mut MinuteLeaf<T> = hour.get_minute_with_timestamp(time).unwrap();
+        let second: &mut SecondLeaf<T> = minute.get_second_with_timestamp(time).unwrap();
+        let frame: &mut FrameLeaf<T> = second.get_frame_with_timestamp(time).unwrap();
+
+        frame.get_keyframe_at_timestamp(time)
     }
 
     /// # Panics
@@ -493,17 +509,17 @@ impl<T> Sequence<T> {
 }
 
 #[derive(Debug)]
-pub struct HourLeaf<T> {
+pub struct HourLeaf<T: Tween> {
     minutes: BTreeMap<isize, MinuteLeaf<T>>,
 }
 
-impl<T> Default for HourLeaf<T> {
+impl<T: Tween> Default for HourLeaf<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> HourLeaf<T> {
+impl<T: Tween> HourLeaf<T> {
     pub fn new() -> Self {
         Self {
             minutes: BTreeMap::new(),
@@ -555,17 +571,17 @@ impl<T> HourLeaf<T> {
 }
 
 #[derive(Debug)]
-pub struct MinuteLeaf<T> {
+pub struct MinuteLeaf<T: Tween> {
     seconds: BTreeMap<isize, SecondLeaf<T>>,
 }
 
-impl<T> Default for MinuteLeaf<T> {
+impl<T: Tween> Default for MinuteLeaf<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> MinuteLeaf<T> {
+impl<T: Tween> MinuteLeaf<T> {
     pub fn new() -> Self {
         Self {
             seconds: BTreeMap::new(),
@@ -617,17 +633,17 @@ impl<T> MinuteLeaf<T> {
 }
 
 #[derive(Debug)]
-pub struct SecondLeaf<T> {
+pub struct SecondLeaf<T: Tween> {
     frames: BTreeMap<isize, FrameLeaf<T>>,
 }
 
-impl<T> Default for SecondLeaf<T> {
+impl<T: Tween> Default for SecondLeaf<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> SecondLeaf<T> {
+impl<T: Tween> SecondLeaf<T> {
     pub fn new() -> Self {
         Self {
             frames: BTreeMap::new(),
@@ -676,17 +692,17 @@ impl<T> SecondLeaf<T> {
 }
 
 #[derive(Debug)]
-pub struct FrameLeaf<T> {
+pub struct FrameLeaf<T: Tween> {
     nanos: BTreeMap<isize, Keyframe<T>>,
 }
 
-impl<T> Default for FrameLeaf<T> {
+impl<T: Tween> Default for FrameLeaf<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> FrameLeaf<T> {
+impl<T: Tween> FrameLeaf<T> {
     pub fn new() -> Self {
         Self {
             nanos: BTreeMap::new(),
@@ -724,6 +740,6 @@ impl<T> FrameLeaf<T> {
 }
 
 #[derive(Debug, Default)]
-pub struct Keyframe<T> {
+pub struct Keyframe<T: Tween> {
     pub value: T,
 }
