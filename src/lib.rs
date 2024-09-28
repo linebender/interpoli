@@ -333,14 +333,14 @@ fn tline_set_by_timestamp() {
 fn tline_new_sequence() {
     let mut timeline = Timeline::new(Framerate::Fixed(24.0));
 
-    let mut sequence_one: &mut Sequence<i64> = timeline.new_sequence(Sequence::new()).unwrap();
+    let mut sequence_one: &mut Sequence<i64> = timeline.new_sequence().unwrap();
 
     assert!(sequence_one
         .add_keyframe_at_timestamp(Keyframe { value: 3 }, &tcode_hmsf!(00:00:05:00))
         .is_some());
 
-    let mut sequence_two: &mut Sequence<i32> = timeline.new_sequence(Sequence::new()).unwrap();
-    
+    let mut sequence_two: &mut Sequence<i32> = timeline.new_sequence().unwrap();
+
     assert!(sequence_two
         .add_keyframe_at_timestamp(Keyframe { value: 6 }, &tcode_hmsf!(00:00:10:00))
         .is_some());

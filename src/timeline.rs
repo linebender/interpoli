@@ -368,13 +368,13 @@ impl Timeline {
         }
     }
 
-    pub fn new_sequence<T: 'static>(&mut self, seq: Sequence<T>) -> Option<&mut Sequence<T>> {
+    pub fn new_sequence<T: 'static>(&mut self) -> Option<&mut Sequence<T>> {
         if self.sequences.get::<Vec<Sequence<T>>>().is_none() {
             self.sequences.insert(Vec::<Sequence<T>>::new());
         }
 
         let mut seq_list = self.sequences.get_mut::<Vec<Sequence<T>>>().unwrap();
-        seq_list.push(seq);
+        seq_list.push(Sequence::<T>::new());
 
         seq_list.last_mut()
     }
