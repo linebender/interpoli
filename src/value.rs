@@ -3,7 +3,7 @@
 
 use alloc::vec::Vec;
 use peniko::{self, kurbo};
-use std::fmt::Debug;
+use alloc::fmt::Debug;
 
 /// Fixed or animated value.
 #[derive(Clone, Debug)]

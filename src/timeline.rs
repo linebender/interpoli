@@ -3,6 +3,7 @@ use alloc::{
     format,
     vec::Vec,
     fmt::Debug,
+    string::String,
     collections::btree_map::BTreeMap,
 };
 use anymap::hashbrown::AnyMap;
