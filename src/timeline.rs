@@ -1,3 +1,6 @@
+// Copyright 2024 the Interpoli Authors
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
 use crate::Tween;
 use alloc::{
     collections::btree_map::BTreeMap,
@@ -51,6 +54,7 @@ pub struct Timecode {
 }
 
 #[allow(unused_macros)]
+#[allow(clippy::zero_prefixed_literal)]
 macro_rules! tcode_hmsf {
     ($h:tt:$m:tt:$s:tt:$f:tt) => {
         Timecode::new($h, $m, $s, $f)
@@ -58,6 +62,7 @@ macro_rules! tcode_hmsf {
 }
 
 #[allow(unused_macros)]
+#[allow(clippy::zero_prefixed_literal)]
 macro_rules! tcode_hmsf_framerate {
     ($h:tt:$m:tt:$s:tt:$f:tt, $fr:expr) => {
         Timecode::new_with_framerate($h, $m, $s, $f, 0, $fr)
@@ -65,6 +70,7 @@ macro_rules! tcode_hmsf_framerate {
 }
 
 #[allow(unused_macros)]
+#[allow(clippy::zero_prefixed_literal)]
 macro_rules! tcode_hms {
     ($h:tt:$m:tt:$s:tt) => {
         Timecode::new($h, $m, $s, 0)
@@ -72,6 +78,7 @@ macro_rules! tcode_hms {
 }
 
 #[allow(unused_macros)]
+#[allow(clippy::zero_prefixed_literal)]
 macro_rules! tcode_full {
     ($h:tt:$m:tt:$s:tt:$f:tt:$nf:tt, $fr:expr) => {
         Timecode::new_with_framerate($h, $m, $s, $f, $nf, $fr)
