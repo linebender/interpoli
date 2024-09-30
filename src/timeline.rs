@@ -1,7 +1,7 @@
 use crate::Tween;
+use alloc::collections::btree_map::BTreeMap;
 use anymap::AnyMap;
-use std::collections::BTreeMap;
-use std::time::Duration;
+use core::time::Duration;
 
 #[derive(Debug, Clone)]
 pub enum Framerate {
@@ -122,6 +122,12 @@ impl Timecode {
     #[inline]
     pub fn nanoframes(&self) -> &isize {
         &self.nanoframes
+    }
+
+    pub fn correct(&mut self) -> &Self {
+        self.correct_overflow();
+        self.correct_underflow();
+        self
     }
 
     fn correct_overflow(&mut self) {
@@ -369,12 +375,15 @@ impl Timeline {
         }
     }
 
+    /// # Panics
+    ///
+    /// TODO!
     pub fn new_sequence<T: Tween + 'static>(&mut self) -> Option<&mut Sequence<T>> {
         if self.sequences.get::<Vec<Sequence<T>>>().is_none() {
             self.sequences.insert(Vec::<Sequence<T>>::new());
         }
 
-        let mut seq_list = self.sequences.get_mut::<Vec<Sequence<T>>>().unwrap();
+        let seq_list = self.sequences.get_mut::<Vec<Sequence<T>>>().unwrap();
         seq_list.push(Sequence::<T>::new());
 
         seq_list.last_mut()
@@ -751,6 +760,9 @@ impl<T: Tween> FrameLeaf<T> {
         self.get_keyframe_at_isize(time.nanoframes())
     }
 }
+
+#[derive(Debug, Default)]
+pub struct AnimationEngine {}
 
 #[derive(Debug, Default)]
 pub struct Keyframe<T: Tween> {

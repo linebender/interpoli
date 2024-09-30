@@ -163,7 +163,7 @@ fn tcode_full_24fps_hour() {
 
 #[test]
 fn tcode_set_by_duration() {
-    use std::time::Duration;
+    use core::time::Duration;
 
     let mut time = tcode_hmsf_framerate!(00:00:10:00, Framerate::Fixed(23.97));
 
@@ -185,7 +185,7 @@ fn tcode_set_by_timestamp() {
 
 #[test]
 fn tcode_add_by_duration() {
-    use std::time::Duration;
+    use core::time::Duration;
 
     let mut time = tcode_hmsf_framerate!(00:00:00:00, Framerate::Fixed(24.0));
 
@@ -207,7 +207,7 @@ fn tcode_add_by_timestamp() {
 
 #[test]
 fn tcode_sub_by_duration() {
-    use std::time::Duration;
+    use core::time::Duration;
 
     let mut time = tcode_hmsf_framerate!(01:00:00:00, Framerate::Fixed(24.0));
 
@@ -229,7 +229,7 @@ fn tcode_sub_by_timestamp() {
 
 #[test]
 fn tcode_ntsc_tv() {
-    use std::time::Duration;
+    use core::time::Duration;
 
     let mut time = tcode_hmsf_framerate!(00:00:00:00, Framerate::Fixed(23.97));
 
@@ -241,7 +241,7 @@ fn tcode_ntsc_tv() {
 
 #[test]
 fn tcode_high_fps() {
-    use std::time::Duration;
+    use core::time::Duration;
 
     let mut time = tcode_hmsf_framerate!(00:00:00:00, Framerate::Fixed(1000.0));
 
@@ -253,7 +253,7 @@ fn tcode_high_fps() {
 
 #[test]
 fn tcode_framerate_standard_that_doesnt_exist() {
-    use std::time::Duration;
+    use core::time::Duration;
 
     let mut time = tcode_hmsf_framerate!(00:00:00:00, Framerate::Fixed(159.3947));
 
@@ -268,7 +268,7 @@ fn tcode_framerate_standard_that_doesnt_exist() {
 
 #[test]
 fn tcode_as_nanoseconds() {
-    use std::time::Duration;
+    use core::time::Duration;
 
     let time = tcode_hmsf_framerate!(00:00:09:00, Framerate::Fixed(30.0));
     let dur = Duration::from_secs(9);
@@ -333,13 +333,13 @@ fn tline_set_by_timestamp() {
 fn tline_new_integer_sequences() {
     let mut timeline = Timeline::new(Framerate::Fixed(24.0));
 
-    let mut sequence_one: &mut Sequence<f64> = timeline.new_sequence().unwrap();
+    let sequence_one: &mut Sequence<f64> = timeline.new_sequence().unwrap();
 
     assert!(sequence_one
         .add_keyframe_at_timestamp(Keyframe { value: 3.0 }, &tcode_hmsf!(00:00:05:00))
         .is_some());
 
-    let mut sequence_two: &mut Sequence<f32> = timeline.new_sequence().unwrap();
+    let sequence_two: &mut Sequence<f32> = timeline.new_sequence().unwrap();
 
     assert!(sequence_two
         .add_keyframe_at_timestamp(Keyframe { value: 6.0 }, &tcode_hmsf!(00:00:10:00))
@@ -352,7 +352,7 @@ fn tline_new_kurbo_sequences() {
 
     let mut timeline = Timeline::new(Framerate::Fixed(24.0));
 
-    let mut sequence: &mut Sequence<Vec2> = timeline.new_sequence().unwrap();
+    let sequence: &mut Sequence<Vec2> = timeline.new_sequence().unwrap();
 
     sequence.add_keyframes_at_timestamp(vec![
         (
@@ -386,17 +386,40 @@ fn tline_nesting() {
 
     let mut main = Timeline::new(Framerate::Fixed(24.0));
 
-    let mut main_seq: &mut Sequence<f64> = main.new_sequence().unwrap();
+    let main_seq: &mut Sequence<f64> = main.new_sequence().unwrap();
     main_seq.add_keyframe_at_timestamp(Keyframe { value: 0.0 }, &tcode_hmsf!(00:00:02:00));
 
     let mut child = Timeline::new(Framerate::Fixed(24.0));
 
-    let mut child_seq: &mut Sequence<Vec2> = child.new_sequence().unwrap();
-    child_seq.add_keyframe_at_timestamp(Keyframe { value: Vec2::new(0.0, 1.0) }, &tcode_hmsf!(00:00:02:00));
+    let child_seq: &mut Sequence<Vec2> = child.new_sequence().unwrap();
+    child_seq.add_keyframe_at_timestamp(
+        Keyframe {
+            value: Vec2::new(0.0, 1.0),
+        },
+        &tcode_hmsf!(00:00:02:00),
+    );
 
     main.add_child(child);
 
     assert!(main.children().len() == 1);
+}
+
+#[test]
+fn tline_stress_test() {
+    let mut timeline = Timeline::new(Framerate::Fixed(24.0));
+
+    let sequence_one: &mut Sequence<f64> = timeline.new_sequence().unwrap();
+
+    for i in 0..10000 {
+        sequence_one.add_keyframe_at_timestamp(
+            Keyframe { value: i as f64 },
+            tcode_hmsf!(00:00:i:00).correct(),
+        );
+    }
+
+    assert!(sequence_one
+        .get_keyframe_at_timestamp(&tcode_hmsf!(00:01:00:00))
+        .is_some());
 }
 
 #[test]
