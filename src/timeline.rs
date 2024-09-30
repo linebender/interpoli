@@ -1,6 +1,6 @@
 use crate::Tween;
 use alloc::collections::btree_map::BTreeMap;
-use anymap::AnyMap;
+use anymap::hashbrown::AnyMap;
 use core::time::Duration;
 
 #[derive(Debug, Clone)]
