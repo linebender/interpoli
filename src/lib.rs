@@ -95,16 +95,19 @@ impl Default for Transform {
 // Syntax Tests.
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn tcode_macro() {
     println!("tcode_macro: {:?}", tcode_hmsf!(1:23:45:01).as_string());
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn tcode_set_hms() {
     println!("tcode_set_hms: {:?}", tcode_hms!(98:76:54).hms_as_string());
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn tcode_with_framerate() {
     println!(
         "tcode_with_framerate: {:?}",
@@ -115,6 +118,7 @@ fn tcode_with_framerate() {
 // Assert Tests.
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn tcode_macro_overflow() {
     let time = tcode_hmsf!(99:99:99:99);
 
@@ -126,6 +130,7 @@ fn tcode_macro_overflow() {
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn tcode_full_24fps_second() {
     let mut time = tcode_hmsf_framerate!(00:00:00:00, Framerate::Fixed(24.0));
 
@@ -138,6 +143,7 @@ fn tcode_full_24fps_second() {
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn tcode_full_24fps_minute() {
     let mut time = tcode_hmsf_framerate!(00:00:00:00, Framerate::Fixed(24.0));
 
@@ -150,6 +156,7 @@ fn tcode_full_24fps_minute() {
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn tcode_full_24fps_hour() {
     let mut time = tcode_hmsf_framerate!(00:00:00:00, Framerate::Fixed(24.0));
 
@@ -162,6 +169,7 @@ fn tcode_full_24fps_hour() {
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn tcode_set_by_duration() {
     use core::time::Duration;
 
@@ -174,6 +182,7 @@ fn tcode_set_by_duration() {
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn tcode_set_by_timestamp() {
     let mut time = tcode_hmsf_framerate!(00:00:10:00, Framerate::Fixed(23.97));
 
@@ -184,6 +193,7 @@ fn tcode_set_by_timestamp() {
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn tcode_add_by_duration() {
     use core::time::Duration;
 
@@ -196,6 +206,7 @@ fn tcode_add_by_duration() {
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn tcode_add_by_timestamp() {
     let mut time = tcode_hmsf_framerate!(00:00:05:00, Framerate::Fixed(24.0));
 
@@ -206,6 +217,7 @@ fn tcode_add_by_timestamp() {
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn tcode_sub_by_duration() {
     use core::time::Duration;
 
@@ -218,6 +230,7 @@ fn tcode_sub_by_duration() {
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn tcode_sub_by_timestamp() {
     let mut time = tcode_hmsf_framerate!(00:01:00:00, Framerate::Fixed(24.0));
 
@@ -228,6 +241,7 @@ fn tcode_sub_by_timestamp() {
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn tcode_ntsc_tv() {
     use core::time::Duration;
 
@@ -240,6 +254,7 @@ fn tcode_ntsc_tv() {
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn tcode_high_fps() {
     use core::time::Duration;
 
@@ -252,6 +267,7 @@ fn tcode_high_fps() {
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn tcode_framerate_standard_that_doesnt_exist() {
     use core::time::Duration;
 
@@ -267,6 +283,7 @@ fn tcode_framerate_standard_that_doesnt_exist() {
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn tcode_as_nanoseconds() {
     use core::time::Duration;
 
@@ -283,6 +300,7 @@ fn tcode_as_nanoseconds() {
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn tcode_get_lerp_time_between() {
     let time = tcode_hmsf_framerate!(00:00:00:12, Framerate::Fixed(24.0));
 
@@ -296,6 +314,7 @@ fn tcode_get_lerp_time_between() {
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn tcode_lerp_fixed_vs_inter() {
     let time_fixed = tcode_full!(00:00:00:00:500_000_000, Framerate::Fixed(1.0));
     let time_inter = tcode_full!(00:00:00:00:500_000_000, Framerate::Interpolated(1.0));
@@ -314,6 +333,7 @@ fn tcode_lerp_fixed_vs_inter() {
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn tline_new() {
     let timeline = Timeline::new(Framerate::Fixed(24.0));
 
@@ -321,6 +341,7 @@ fn tline_new() {
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn tline_set_by_timestamp() {
     let mut timeline = Timeline::new(Framerate::Fixed(24.0));
 
@@ -330,6 +351,7 @@ fn tline_set_by_timestamp() {
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn tline_new_integer_sequences() {
     let mut timeline = Timeline::new(Framerate::Fixed(24.0));
 
@@ -347,6 +369,7 @@ fn tline_new_integer_sequences() {
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn tline_new_kurbo_sequences() {
     use kurbo::Vec2;
 
@@ -381,6 +404,7 @@ fn tline_new_kurbo_sequences() {
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn tline_nesting() {
     use kurbo::Vec2;
 
@@ -405,6 +429,7 @@ fn tline_nesting() {
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn tline_stress_test() {
     let mut timeline = Timeline::new(Framerate::Fixed(24.0));
 
@@ -423,6 +448,7 @@ fn tline_stress_test() {
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn sequence_get_and_create_hour() {
     let mut seq = Sequence::<f64>::new();
 
@@ -442,6 +468,7 @@ fn sequence_get_and_create_hour() {
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn sequence_get_or_create_hour() {
     let mut seq = Sequence::<f64>::new();
 
@@ -456,6 +483,7 @@ fn sequence_get_or_create_hour() {
 }
 
 #[test]
+#[allow(clippy::zero_prefixed_literal)]
 fn sequence_add_keyframe_at_timestamp() {
     let mut seq = Sequence::<f64>::new();
 
