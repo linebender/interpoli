@@ -1,5 +1,10 @@
 use crate::Tween;
-use alloc::collections::btree_map::BTreeMap;
+use alloc::{
+    format,
+    vec::Vec,
+    fmt::Debug,
+    collections::btree_map::BTreeMap,
+};
 use anymap::hashbrown::AnyMap;
 use core::time::Duration;
 
