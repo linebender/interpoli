@@ -1,9 +1,9 @@
 // Copyright 2024 the Interpoli Authors
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
+use alloc::fmt::Debug;
 use alloc::vec::Vec;
 use peniko::{self, kurbo};
-use alloc::fmt::Debug;
 
 /// Fixed or animated value.
 #[derive(Clone, Debug)]

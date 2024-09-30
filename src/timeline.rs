@@ -1,10 +1,10 @@
 use crate::Tween;
 use alloc::{
-    format,
-    vec::Vec,
-    fmt::Debug,
-    string::String,
     collections::btree_map::BTreeMap,
+    fmt::Debug,
+    format,
+    string::{String, ToString},
+    vec::Vec,
 };
 use anymap::hashbrown::AnyMap;
 use core::time::Duration;
@@ -19,14 +19,14 @@ pub enum Framerate {
 impl Framerate {
     pub fn as_string(&self) -> String {
         match self {
-            Framerate::Timestamp => 0.0.to_string(),
+            Framerate::Timestamp => 0.0_f64.to_string(),
             Framerate::Fixed(f) | Framerate::Interpolated(f) => f.to_string(),
         }
     }
 
     pub fn as_f64(&self) -> f64 {
         match self {
-            Framerate::Timestamp => 0.0,
+            Framerate::Timestamp => 0.0_f64,
             Framerate::Fixed(f) | Framerate::Interpolated(f) => *f,
         }
     }
