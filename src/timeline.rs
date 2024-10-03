@@ -11,8 +11,9 @@ use alloc::{
 };
 use anymap::hashbrown::AnyMap;
 use core::time::Duration;
+use hashbrown::HashMap;
 
-#[derive(Debug, Clone)]
+#[derive(Copy, Debug, Clone)]
 pub enum Framerate {
     Timestamp,
     Fixed(f64),
@@ -133,7 +134,13 @@ impl Timecode {
         &self.nanoframes
     }
 
-    pub fn correct(&mut self) -> &Self {
+    #[inline]
+    pub fn framerate(&self) -> &Framerate {
+        &self.framerate
+    }
+
+    pub fn correct_with_framerate(&mut self, fr: Framerate) -> &Self {
+        self.framerate = fr;
         self.correct_overflow();
         self.correct_underflow();
         self
@@ -369,10 +376,92 @@ impl Timecode {
 }
 
 #[derive(Debug)]
+pub struct StaticTimeline<T: Tween> {
+    time: Timecode,
+    sequences: HashMap<usize, Sequence<T>>,
+    children: Vec<StaticTimeline<T>>,
+    max_sequences: usize,
+    sequence_name_map: HashMap<String, usize>,
+}
+
+impl<T: Tween> StaticTimeline<T> {
+    pub fn new(fr: Framerate) -> Self {
+        Self {
+            time: tcode_hmsf_framerate!(00:00:00:00, fr),
+            sequences: HashMap::new(),
+            children: Vec::new(),
+            max_sequences: 0,
+            sequence_name_map: HashMap::new(),
+        }
+    }
+
+    #[inline]
+    pub fn framerate(&self) -> &Framerate {
+        self.time.framerate()
+    }
+
+    /// # Panics
+    ///
+    /// TODO!
+    pub fn new_sequence(&mut self, name: &str) -> Option<&mut Sequence<T>> {
+        self.max_sequences += 1;
+
+        self.sequences
+            .insert(self.max_sequences, Sequence::<T>::new());
+        self.sequence_name_map
+            .insert(name.to_string(), self.max_sequences);
+
+        self.sequences.get_mut(&self.max_sequences)
+    }
+
+    pub fn add_child(&mut self, child: StaticTimeline<T>) {
+        self.children.push(child);
+    }
+
+    pub fn get_child_mut(&mut self, id: usize) -> Option<&mut StaticTimeline<T>> {
+        self.children.get_mut(id)
+    }
+
+    pub fn children(&self) -> &Vec<StaticTimeline<T>> {
+        &self.children
+    }
+
+    pub fn time(&self) -> &Timecode {
+        &self.time
+    }
+
+    pub fn add_by_duration(&mut self, d: Duration) {
+        self.time.add_by_duration(d);
+    }
+
+    pub fn sub_by_duration(&mut self, d: Duration) {
+        self.time.sub_by_duration(d);
+    }
+
+    pub fn set_by_duration(&mut self, d: Duration) {
+        self.time.set_by_duration(d);
+    }
+
+    pub fn add_by_timestamp(&mut self, t: Timecode) {
+        self.time.add_by_timestamp(t);
+    }
+
+    pub fn sub_by_timestamp(&mut self, t: Timecode) {
+        self.time.sub_by_timestamp(t);
+    }
+
+    pub fn set_by_timestamp(&mut self, t: Timecode) {
+        self.time.set_by_timestamp(t);
+    }
+}
+
+#[derive(Debug)]
 pub struct Timeline {
     time: Timecode,
     sequences: AnyMap,
     children: Vec<Timeline>,
+    max_sequences: usize,
+    sequence_name_map: HashMap<String, usize>,
 }
 
 impl Timeline {
@@ -381,21 +470,40 @@ impl Timeline {
             time: tcode_hmsf_framerate!(00:00:00:00, fr),
             sequences: AnyMap::new(),
             children: Vec::new(),
+            max_sequences: 0,
+            sequence_name_map: HashMap::new(),
         }
+    }
+
+    #[inline]
+    pub fn framerate(&self) -> &Framerate {
+        self.time.framerate()
     }
 
     /// # Panics
     ///
     /// TODO!
-    pub fn new_sequence<T: Tween + 'static>(&mut self) -> Option<&mut Sequence<T>> {
-        if self.sequences.get::<Vec<Sequence<T>>>().is_none() {
-            self.sequences.insert(Vec::<Sequence<T>>::new());
+    pub fn new_sequence<T: Tween + 'static>(&mut self, name: &str) -> Option<&mut Sequence<T>> {
+        self.max_sequences += 1;
+
+        if self
+            .sequences
+            .get::<HashMap<usize, Sequence<T>>>()
+            .is_none()
+        {
+            self.sequences.insert(HashMap::<usize, Sequence<T>>::new());
         }
 
-        let seq_list = self.sequences.get_mut::<Vec<Sequence<T>>>().unwrap();
-        seq_list.push(Sequence::<T>::new());
+        let seq_list = self
+            .sequences
+            .get_mut::<HashMap<usize, Sequence<T>>>()
+            .unwrap();
+        seq_list.insert(self.max_sequences, Sequence::<T>::new());
 
-        seq_list.last_mut()
+        self.sequence_name_map
+            .insert(name.to_string(), self.max_sequences);
+
+        seq_list.get_mut(&self.max_sequences)
     }
 
     pub fn add_child(&mut self, child: Timeline) {
@@ -770,8 +878,15 @@ impl<T: Tween> FrameLeaf<T> {
     }
 }
 
-#[derive(Debug, Default)]
-pub struct AnimationEngine {}
+// #[derive(Debug, Default)]
+// pub struct AnimationEngine {
+//
+// }
+//
+// pub struct AnimationTween {
+//     begin: Timecode,
+//     end: Timecode,
+// }
 
 #[derive(Debug, Default)]
 pub struct Keyframe<T: Tween> {

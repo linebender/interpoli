@@ -19,7 +19,7 @@ pub mod timeline;
 pub mod animated;
 pub mod fixed;
 
-pub use timeline::{Framerate, HourLeaf, Keyframe, Sequence, Timecode, Timeline};
+pub use timeline::{Framerate, HourLeaf, Keyframe, Sequence, StaticTimeline, Timecode, Timeline};
 
 #[cfg(feature = "vello")]
 mod render;
@@ -355,13 +355,13 @@ fn tline_set_by_timestamp() {
 fn tline_new_integer_sequences() {
     let mut timeline = Timeline::new(Framerate::Fixed(24.0));
 
-    let sequence_one: &mut Sequence<f64> = timeline.new_sequence().unwrap();
+    let sequence_one: &mut Sequence<f64> = timeline.new_sequence("sequence_one").unwrap();
 
     assert!(sequence_one
         .add_keyframe_at_timestamp(Keyframe { value: 3.0 }, &tcode_hmsf!(00:00:05:00))
         .is_some());
 
-    let sequence_two: &mut Sequence<f32> = timeline.new_sequence().unwrap();
+    let sequence_two: &mut Sequence<f32> = timeline.new_sequence("sequence_two").unwrap();
 
     assert!(sequence_two
         .add_keyframe_at_timestamp(Keyframe { value: 6.0 }, &tcode_hmsf!(00:00:10:00))
@@ -375,7 +375,7 @@ fn tline_new_kurbo_sequences() {
 
     let mut timeline = Timeline::new(Framerate::Fixed(24.0));
 
-    let sequence: &mut Sequence<Vec2> = timeline.new_sequence().unwrap();
+    let sequence: &mut Sequence<Vec2> = timeline.new_sequence("sequence").unwrap();
 
     sequence.add_keyframes_at_timestamp(vec![
         (
@@ -410,12 +410,12 @@ fn tline_nesting() {
 
     let mut main = Timeline::new(Framerate::Fixed(24.0));
 
-    let main_seq: &mut Sequence<f64> = main.new_sequence().unwrap();
+    let main_seq: &mut Sequence<f64> = main.new_sequence("main_seq").unwrap();
     main_seq.add_keyframe_at_timestamp(Keyframe { value: 0.0 }, &tcode_hmsf!(00:00:02:00));
 
     let mut child = Timeline::new(Framerate::Fixed(24.0));
 
-    let child_seq: &mut Sequence<Vec2> = child.new_sequence().unwrap();
+    let child_seq: &mut Sequence<Vec2> = child.new_sequence("child_seq").unwrap();
     child_seq.add_keyframe_at_timestamp(
         Keyframe {
             value: Vec2::new(0.0, 1.0),
@@ -431,20 +431,59 @@ fn tline_nesting() {
 #[test]
 #[allow(clippy::zero_prefixed_literal)]
 fn tline_stress_test() {
+    #[cfg(feature = "std")]
+    use std::time::Instant;
+
     let mut timeline = Timeline::new(Framerate::Fixed(24.0));
+    let framerate = *timeline.framerate();
 
-    let sequence_one: &mut Sequence<f64> = timeline.new_sequence().unwrap();
+    let sequence_one: &mut Sequence<f64> = timeline.new_sequence("stress_test").unwrap();
 
-    for i in 0..10000 {
+    for i in 0..1_000_000 {
         sequence_one.add_keyframe_at_timestamp(
             Keyframe { value: i as f64 },
-            tcode_hmsf!(00:00:i:00).correct(),
+            &tcode_hmsf_framerate!(00:00:i:00, framerate),
         );
     }
 
-    assert!(sequence_one
-        .get_keyframe_at_timestamp(&tcode_hmsf!(00:01:00:00))
-        .is_some());
+    #[cfg(feature = "std")]
+    let instant = Instant::now();
+
+    let keyframe = sequence_one.get_keyframe_at_timestamp(&tcode_hmsf!(00:15:00:00));
+
+    #[cfg(feature = "std")]
+    println!("{:?}", instant.elapsed());
+
+    assert!(keyframe.is_some());
+}
+
+#[test]
+#[allow(clippy::zero_prefixed_literal)]
+fn static_tline_stress_test() {
+    #[cfg(feature = "std")]
+    use std::time::Instant;
+
+    let mut timeline: StaticTimeline<f64> = StaticTimeline::new(Framerate::Fixed(24.0));
+    let framerate = *timeline.framerate();
+
+    let sequence_one = timeline.new_sequence("stress_test").unwrap();
+
+    for i in 0..1_000_000 {
+        sequence_one.add_keyframe_at_timestamp(
+            Keyframe { value: i as f64 },
+            &tcode_hmsf_framerate!(00:00:i:00, framerate),
+        );
+    }
+
+    #[cfg(feature = "std")]
+    let instant = Instant::now();
+
+    let keyframe = sequence_one.get_keyframe_at_timestamp(&tcode_hmsf!(00:15:00:00));
+
+    #[cfg(feature = "std")]
+    println!("{:?}", instant.elapsed());
+
+    assert!(keyframe.is_some());
 }
 
 #[test]
