@@ -1,7 +1,7 @@
 // Copyright 2024 the Interpoli Authors
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-use crate::Tween;
+use crate::{Easing, Tween};
 use alloc::{
     collections::btree_map::BTreeMap,
     fmt::Debug,
@@ -80,6 +80,12 @@ macro_rules! tcode_full {
     ($h:tt:$m:tt:$s:tt:$f:tt:$nf:tt, $fr:expr) => {
         Timecode::new_with_framerate($h, $m, $s, $f, $nf, $fr)
     };
+}
+
+impl Default for Timecode {
+    fn default() -> Self {
+        Timecode::new_with_framerate(0, 0, 0, 0, 0, Framerate::Timestamp)
+    }
 }
 
 impl Timecode {
@@ -414,6 +420,28 @@ impl<T: Tween> StaticTimeline<T> {
         self.sequences.get_mut(&self.max_sequences)
     }
 
+    #[inline]
+    pub fn get_sequence_pointer(&self, name: &str) -> Option<&usize> {
+        self.sequence_name_map.get(name)
+    }
+
+    /// # Panics
+    ///
+    /// TODO!
+    #[inline]
+    pub fn get_sequence_with_pointer(&mut self, pointer: usize) -> Option<&mut Sequence<T>> {
+        self.sequences.get_mut(&pointer)
+    }
+
+    /// # Panics
+    ///
+    /// TODO!
+    pub fn get_sequence_with_name(&mut self, name: &str) -> Option<&mut Sequence<T>> {
+        let ptr = self.get_sequence_pointer(name).unwrap();
+
+        self.get_sequence_with_pointer(*ptr)
+    }
+
     pub fn add_child(&mut self, child: StaticTimeline<T>) {
         self.children.push(child);
     }
@@ -458,6 +486,7 @@ impl<T: Tween> StaticTimeline<T> {
 #[derive(Debug)]
 pub struct Timeline {
     time: Timecode,
+    last_time: Timecode,
     sequences: AnyMap,
     children: Vec<Timeline>,
     max_sequences: usize,
@@ -468,6 +497,7 @@ impl Timeline {
     pub fn new(fr: Framerate) -> Self {
         Self {
             time: tcode_hmsf_framerate!(00:00:00:00, fr),
+            last_time: tcode_hmsf_framerate!(00:00:00:00, fr),
             sequences: AnyMap::new(),
             children: Vec::new(),
             max_sequences: 0,
@@ -498,12 +528,45 @@ impl Timeline {
             .sequences
             .get_mut::<HashMap<usize, Sequence<T>>>()
             .unwrap();
+
         seq_list.insert(self.max_sequences, Sequence::<T>::new());
 
         self.sequence_name_map
             .insert(name.to_string(), self.max_sequences);
 
         seq_list.get_mut(&self.max_sequences)
+    }
+
+    #[inline]
+    pub fn get_sequence_pointer(&self, name: &str) -> Option<&usize> {
+        self.sequence_name_map.get(name)
+    }
+
+    /// # Panics
+    ///
+    /// TODO!
+    pub fn get_sequence_with_pointer<T: Tween + 'static>(
+        &mut self,
+        pointer: usize,
+    ) -> Option<&mut Sequence<T>> {
+        let seq_list = self
+            .sequences
+            .get_mut::<HashMap<usize, Sequence<T>>>()
+            .unwrap();
+
+        seq_list.get_mut(&pointer)
+    }
+
+    /// # Panics
+    ///
+    /// TODO!
+    pub fn get_sequence_with_name<T: Tween + 'static>(
+        &mut self,
+        name: &str,
+    ) -> Option<&mut Sequence<T>> {
+        let ptr = self.get_sequence_pointer(name).unwrap();
+
+        self.get_sequence_with_pointer(*ptr)
     }
 
     pub fn add_child(&mut self, child: Timeline) {
@@ -549,7 +612,8 @@ impl Timeline {
 
 #[derive(Debug)]
 pub struct Sequence<T: Tween> {
-    tree: BTreeMap<isize, HourLeaf<T>>,
+    engine: AnimationEngine<T>,
+    tree: BTreeMap<isize, SecondLeaf<T>>,
 }
 
 impl<T: Tween> Default for Sequence<T> {
@@ -561,169 +625,8 @@ impl<T: Tween> Default for Sequence<T> {
 impl<T: Tween> Sequence<T> {
     pub fn new() -> Self {
         Self {
+            engine: AnimationEngine::default(),
             tree: BTreeMap::new(),
-        }
-    }
-
-    // Create and get hour
-
-    #[inline]
-    pub fn create_hour_with_isize(&mut self, hour: &isize) -> Option<&mut HourLeaf<T>> {
-        self.tree.insert(*hour, HourLeaf::<T>::new());
-        self.get_hour_with_isize(hour)
-    }
-
-    #[inline]
-    pub fn create_hour_with_timestamp(&mut self, time: &Timecode) -> Option<&mut HourLeaf<T>> {
-        self.create_hour_with_isize(time.hours())
-    }
-
-    #[inline]
-    pub fn get_hour_with_isize(&mut self, hour: &isize) -> Option<&mut HourLeaf<T>> {
-        self.tree.get_mut(hour)
-    }
-
-    #[inline]
-    pub fn get_hour_with_timestamp(&mut self, time: &Timecode) -> Option<&mut HourLeaf<T>> {
-        self.get_hour_with_isize(time.hours())
-    }
-
-    #[inline]
-    pub fn get_or_create_hour_with_isize(&mut self, hour: &isize) -> Option<&mut HourLeaf<T>> {
-        if self.get_hour_with_isize(hour).is_none() {
-            return self.create_hour_with_isize(hour);
-        }
-
-        self.get_hour_with_isize(hour)
-    }
-
-    #[inline]
-    pub fn get_or_create_hour_with_timestamp(
-        &mut self,
-        time: &Timecode,
-    ) -> Option<&mut HourLeaf<T>> {
-        self.get_or_create_hour_with_isize(time.hours())
-    }
-
-    /// # Panics
-    ///
-    /// TODO!
-    pub fn add_keyframe_at_timestamp(
-        &mut self,
-        key: Keyframe<T>,
-        time: &Timecode,
-    ) -> Option<&mut Keyframe<T>> {
-        // TODO: Make it so it returns 'None' instead of panicking.
-
-        let hour: &mut HourLeaf<T> = self.get_or_create_hour_with_timestamp(time).unwrap();
-        let minute: &mut MinuteLeaf<T> = hour.get_or_create_minute_with_timestamp(time).unwrap();
-        let second: &mut SecondLeaf<T> = minute.get_or_create_second_with_timestamp(time).unwrap();
-        let frame: &mut FrameLeaf<T> = second.get_or_create_frame_with_timestamp(time).unwrap();
-
-        frame.add_keyframe_at_timestamp(time, key)
-    }
-
-    /// # Panics
-    ///
-    /// TODO!
-    pub fn get_keyframe_at_timestamp(&mut self, time: &Timecode) -> Option<&mut Keyframe<T>> {
-        // TODO: Make it so it returns 'None' instead of panicking.
-
-        let hour: &mut HourLeaf<T> = self.get_hour_with_timestamp(time).unwrap();
-        let minute: &mut MinuteLeaf<T> = hour.get_minute_with_timestamp(time).unwrap();
-        let second: &mut SecondLeaf<T> = minute.get_second_with_timestamp(time).unwrap();
-        let frame: &mut FrameLeaf<T> = second.get_frame_with_timestamp(time).unwrap();
-
-        frame.get_keyframe_at_timestamp(time)
-    }
-
-    /// # Panics
-    ///
-    /// TODO!
-    pub fn add_keyframes_at_timestamp(&mut self, keyframes: Vec<(Keyframe<T>, &Timecode)>) {
-        for k in keyframes {
-            self.add_keyframe_at_timestamp(k.0, k.1);
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct HourLeaf<T: Tween> {
-    minutes: BTreeMap<isize, MinuteLeaf<T>>,
-}
-
-impl<T: Tween> Default for HourLeaf<T> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<T: Tween> HourLeaf<T> {
-    pub fn new() -> Self {
-        Self {
-            minutes: BTreeMap::new(),
-        }
-    }
-
-    // Create and get minute
-
-    #[inline]
-    pub fn create_minute_with_isize(&mut self, minute: &isize) -> Option<&mut MinuteLeaf<T>> {
-        self.minutes.insert(*minute, MinuteLeaf::<T>::new());
-        self.get_minute_with_isize(minute)
-    }
-
-    #[inline]
-    pub fn create_minute_with_timestamp(&mut self, time: &Timecode) -> Option<&mut MinuteLeaf<T>> {
-        self.create_minute_with_isize(time.minutes())
-    }
-
-    #[inline]
-    pub fn get_minute_with_isize(&mut self, minute: &isize) -> Option<&mut MinuteLeaf<T>> {
-        self.minutes.get_mut(minute)
-    }
-
-    #[inline]
-    pub fn get_minute_with_timestamp(&mut self, time: &Timecode) -> Option<&mut MinuteLeaf<T>> {
-        self.get_minute_with_isize(time.minutes())
-    }
-
-    #[inline]
-    pub fn get_or_create_minute_with_isize(
-        &mut self,
-        minute: &isize,
-    ) -> Option<&mut MinuteLeaf<T>> {
-        if self.get_minute_with_isize(minute).is_none() {
-            return self.create_minute_with_isize(minute);
-        }
-
-        self.get_minute_with_isize(minute)
-    }
-
-    #[inline]
-    pub fn get_or_create_minute_with_timestamp(
-        &mut self,
-        time: &Timecode,
-    ) -> Option<&mut MinuteLeaf<T>> {
-        self.get_or_create_minute_with_isize(time.minutes())
-    }
-}
-
-#[derive(Debug)]
-pub struct MinuteLeaf<T: Tween> {
-    seconds: BTreeMap<isize, SecondLeaf<T>>,
-}
-
-impl<T: Tween> Default for MinuteLeaf<T> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<T: Tween> MinuteLeaf<T> {
-    pub fn new() -> Self {
-        Self {
-            seconds: BTreeMap::new(),
         }
     }
 
@@ -731,23 +634,27 @@ impl<T: Tween> MinuteLeaf<T> {
 
     #[inline]
     pub fn create_second_with_isize(&mut self, second: &isize) -> Option<&mut SecondLeaf<T>> {
-        self.seconds.insert(*second, SecondLeaf::<T>::new());
+        self.tree.insert(*second, SecondLeaf::<T>::new());
         self.get_second_with_isize(second)
     }
 
     #[inline]
     pub fn create_second_with_timestamp(&mut self, time: &Timecode) -> Option<&mut SecondLeaf<T>> {
-        self.create_second_with_isize(time.seconds())
+        let hours_to_sec = time.hours() * 3600;
+        let minutes_to_sec = time.minutes() * 60;
+        self.create_second_with_isize(&(hours_to_sec + minutes_to_sec + time.seconds()))
     }
 
     #[inline]
     pub fn get_second_with_isize(&mut self, second: &isize) -> Option<&mut SecondLeaf<T>> {
-        self.seconds.get_mut(second)
+        self.tree.get_mut(second)
     }
 
     #[inline]
     pub fn get_second_with_timestamp(&mut self, time: &Timecode) -> Option<&mut SecondLeaf<T>> {
-        self.get_second_with_isize(time.seconds())
+        let hours_to_sec = time.hours() * 3600;
+        let minutes_to_sec = time.minutes() * 60;
+        self.get_second_with_isize(&(hours_to_sec + minutes_to_sec + time.seconds()))
     }
 
     #[inline]
@@ -767,7 +674,70 @@ impl<T: Tween> MinuteLeaf<T> {
         &mut self,
         time: &Timecode,
     ) -> Option<&mut SecondLeaf<T>> {
-        self.get_or_create_second_with_isize(time.seconds())
+        let hours_to_sec = time.hours() * 3600;
+        let minutes_to_sec = time.minutes() * 60;
+        self.get_or_create_second_with_isize(&(hours_to_sec + minutes_to_sec + time.seconds()))
+    }
+
+    /// # Panics
+    ///
+    /// TODO!
+    pub fn add_keyframe_at_timestamp(
+        &mut self,
+        key: Keyframe<T>,
+        time: &Timecode,
+    ) -> Option<&mut Keyframe<T>> {
+        // TODO: Make it so it returns 'None' instead of panicking.
+        let second: &mut SecondLeaf<T> = self.get_or_create_second_with_timestamp(time).unwrap();
+        let frame: &mut FrameLeaf<T> = second.get_or_create_frame_with_timestamp(time).unwrap();
+
+        frame.add_keyframe_at_timestamp(time, key)
+    }
+
+    /// # Panics
+    ///
+    /// TODO!
+    pub fn get_keyframe_at_timestamp(&mut self, time: &Timecode) -> Option<&mut Keyframe<T>> {
+        // TODO: Make it so it returns 'None' instead of panicking.
+        let second: &mut SecondLeaf<T> = self.get_second_with_timestamp(time).unwrap();
+        let frame: &mut FrameLeaf<T> = second.get_frame_with_timestamp(time).unwrap();
+
+        frame.get_keyframe_at_timestamp(time)
+    }
+
+    /// # Panics
+    ///
+    /// TODO!
+    pub fn add_keyframes_at_timestamp(&mut self, keyframes: Vec<(Keyframe<T>, &Timecode)>) {
+        for k in keyframes {
+            self.add_keyframe_at_timestamp(k.0, k.1);
+        }
+    }
+
+    pub fn get_keyframes_between(
+        &self,
+        begin: &Timecode,
+        end: &Timecode,
+        fr: &Framerate,
+    ) -> Vec<(Timecode, Keyframe<T>)> {
+        let mut final_vec: Vec<(Timecode, Keyframe<T>)> = Vec::new();
+
+        let begin_secs = (begin.hours() * 3600) + (begin.minutes() * 60) + begin.seconds();
+        let end_secs = (end.hours() * 3600) + (end.minutes() * 60) + end.seconds() + 1;
+
+        for i in begin_secs..end_secs {
+            let sec_leaf_search: Option<&SecondLeaf<T>> = self.tree.get(&i);
+
+            if sec_leaf_search.is_none() {
+                continue;
+            }
+
+            let sec_leaf: &SecondLeaf<T> = sec_leaf_search.unwrap();
+
+            sec_leaf.get_keyframes_between(begin, end, i, fr, &mut final_vec);
+        }
+
+        final_vec
     }
 }
 
@@ -821,6 +791,46 @@ impl<T: Tween> SecondLeaf<T> {
         self.get_frame_with_isize(frame)
     }
 
+    pub fn get_keyframes_between(
+        &self,
+        begin: &Timecode,
+        end: &Timecode,
+        current_second: isize,
+        fr: &Framerate,
+        final_vec: &mut Vec<(Timecode, Keyframe<T>)>,
+    ) {
+        let begin_frames: isize = if current_second == *begin.seconds() {
+            *begin.frames()
+        } else {
+            0
+        };
+
+        let end_frames: isize = if current_second == *end.seconds() + 1 {
+            *end.frames()
+        } else {
+            fr.as_f64() as isize
+        };
+
+        for fra_leaf in &self.frames {
+            if *fra_leaf.0 < begin_frames {
+                continue;
+            }
+
+            if *fra_leaf.0 > end_frames {
+                break;
+            }
+
+            fra_leaf.1.get_keyframes_between(
+                begin,
+                end,
+                current_second,
+                *fra_leaf.0,
+                &fr,
+                final_vec,
+            );
+        }
+    }
+
     #[inline]
     pub fn get_or_create_frame_with_timestamp(
         &mut self,
@@ -830,7 +840,7 @@ impl<T: Tween> SecondLeaf<T> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FrameLeaf<T: Tween> {
     nanos: BTreeMap<isize, Keyframe<T>>,
 }
@@ -876,19 +886,106 @@ impl<T: Tween> FrameLeaf<T> {
     pub fn get_keyframe_at_timestamp(&mut self, time: &Timecode) -> Option<&mut Keyframe<T>> {
         self.get_keyframe_at_isize(time.nanoframes())
     }
+
+    pub fn get_keyframes_between(
+        &self,
+        begin: &Timecode,
+        end: &Timecode,
+        current_second: isize,
+        current_frame: isize,
+        fr: &Framerate,
+        final_vec: &mut Vec<(Timecode, Keyframe<T>)>,
+    ) {
+        let begin_nanos: isize = if current_frame == *begin.frames() {
+            *begin.nanoframes()
+        } else {
+            0
+        };
+
+        let end_nanos: isize = if current_frame == *end.frames() + 1 {
+            *end.nanoframes()
+        } else {
+            1_000_000_000
+        };
+
+        for nano_leaf in &self.nanos {
+            if *nano_leaf.0 < begin_nanos {
+                continue;
+            }
+
+            if *nano_leaf.0 > end_nanos {
+                break;
+            }
+
+            let nanoframes = *nano_leaf.0;
+
+            final_vec.push((
+                tcode_full!(00:00:current_second:current_frame:nanoframes, fr.clone()),
+                nano_leaf.1.clone(),
+            ));
+        }
+    }
 }
 
-// #[derive(Debug, Default)]
-// pub struct AnimationEngine {
-//
-// }
-//
-// pub struct AnimationTween {
-//     begin: Timecode,
-//     end: Timecode,
-// }
-
 #[derive(Debug, Default)]
+pub struct AnimationEngine<T: Tween> {
+    t_begin: Timecode,
+    t_end: Timecode,
+    k_begin: Keyframe<T>,
+    k_end: Keyframe<T>,
+    status: AnimationEngineStatus,
+}
+
+#[derive(Debug, Clone, Default)]
+pub enum AnimationEngineStatus {
+    #[default]
+    Empty,
+    Running,
+    Ended,
+}
+
+impl<T: Tween> AnimationEngine<T> {
+    pub fn tween(&mut self, current_time: &Timecode) -> T {
+        let time = current_time.get_lerp_time_between(&self.t_begin, &self.t_end);
+
+        if time >= 1.0 {
+            self.status = AnimationEngineStatus::Ended;
+        }
+
+        self.k_begin
+            .value
+            .tween(&self.k_end.value, time, &Easing::LERP)
+    }
+
+    pub fn set_new_animation(
+        &mut self,
+        begin: Timecode,
+        end: Timecode,
+        k_begin: Keyframe<T>,
+        k_end: Keyframe<T>,
+    ) {
+        self.t_begin = begin;
+        self.t_end = end;
+        self.k_begin = k_begin;
+        self.k_end = k_end;
+
+        self.status = AnimationEngineStatus::Running;
+    }
+
+    pub fn is_empty(&self) -> bool {
+        matches!(self.status, AnimationEngineStatus::Empty)
+    }
+
+    pub fn is_running(&self) -> bool {
+        matches!(self.status, AnimationEngineStatus::Running)
+    }
+
+    pub fn has_ended(&self) -> bool {
+        matches!(self.status, AnimationEngineStatus::Ended)
+    }
+}
+
+#[derive(Debug, Default, Clone)]
 pub struct Keyframe<T: Tween> {
     pub value: T,
 }

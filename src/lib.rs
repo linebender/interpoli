@@ -19,7 +19,7 @@ pub mod timeline;
 pub mod animated;
 pub mod fixed;
 
-pub use timeline::{Framerate, HourLeaf, Keyframe, Sequence, StaticTimeline, Timecode, Timeline};
+pub use timeline::{Framerate, Keyframe, Sequence, StaticTimeline, Timecode, Timeline};
 
 #[cfg(feature = "vello")]
 mod render;
@@ -373,6 +373,9 @@ fn tline_new_integer_sequences() {
 fn tline_new_kurbo_sequences() {
     use kurbo::Vec2;
 
+    #[cfg(feature = "std")]
+    use std::time::Instant;
+
     let mut timeline = Timeline::new(Framerate::Fixed(24.0));
 
     let sequence: &mut Sequence<Vec2> = timeline.new_sequence("sequence").unwrap();
@@ -398,9 +401,59 @@ fn tline_new_kurbo_sequences() {
         ),
     ]);
 
+    #[cfg(feature = "std")]
+    let instant = Instant::now();
+
     assert!(sequence
         .get_keyframe_at_timestamp(&tcode_hmsf!(00:00:02:00))
         .is_some());
+
+    #[cfg(feature = "std")]
+    println!("tline_new_kurbo_sequences: {:?}", instant.elapsed());
+}
+
+#[test]
+#[allow(clippy::zero_prefixed_literal)]
+fn static_tline_new_kurbo_sequences() {
+    use kurbo::Vec2;
+
+    #[cfg(feature = "std")]
+    use std::time::Instant;
+
+    let mut timeline: StaticTimeline<Vec2> = StaticTimeline::new(Framerate::Fixed(24.0));
+
+    let sequence = timeline.new_sequence("sequence").unwrap();
+
+    sequence.add_keyframes_at_timestamp(vec![
+        (
+            Keyframe {
+                value: Vec2::new(0.0, 1.0),
+            },
+            &tcode_hmsf!(00:00:01:00),
+        ),
+        (
+            Keyframe {
+                value: Vec2::new(1.0, 1.0),
+            },
+            &tcode_hmsf!(00:00:02:00),
+        ),
+        (
+            Keyframe {
+                value: Vec2::new(1.0, 2.0),
+            },
+            &tcode_hmsf!(00:00:03:00),
+        ),
+    ]);
+
+    #[cfg(feature = "std")]
+    let instant = Instant::now();
+
+    assert!(sequence
+        .get_keyframe_at_timestamp(&tcode_hmsf!(00:00:02:00))
+        .is_some());
+
+    #[cfg(feature = "std")]
+    println!("tline_new_kurbo_sequences: {:?}", instant.elapsed());
 }
 
 #[test]
@@ -452,7 +505,7 @@ fn tline_stress_test() {
     let keyframe = sequence_one.get_keyframe_at_timestamp(&tcode_hmsf!(00:15:00:00));
 
     #[cfg(feature = "std")]
-    println!("{:?}", instant.elapsed());
+    println!("tline_stress_test: {:?}", instant.elapsed());
 
     assert!(keyframe.is_some());
 }
@@ -481,44 +534,9 @@ fn static_tline_stress_test() {
     let keyframe = sequence_one.get_keyframe_at_timestamp(&tcode_hmsf!(00:15:00:00));
 
     #[cfg(feature = "std")]
-    println!("{:?}", instant.elapsed());
+    println!("static_tline_stress_test: {:?}", instant.elapsed());
 
     assert!(keyframe.is_some());
-}
-
-#[test]
-#[allow(clippy::zero_prefixed_literal)]
-fn sequence_get_and_create_hour() {
-    let mut seq = Sequence::<f64>::new();
-
-    assert!(seq
-        .create_hour_with_timestamp(&tcode_hmsf!(01:00:00:00))
-        .is_some());
-    assert!(seq.create_hour_with_isize(&2).is_some());
-
-    assert!(seq.get_hour_with_isize(&1).is_some());
-    assert!(seq
-        .get_hour_with_timestamp(&tcode_hmsf!(02:00:00:00))
-        .is_some());
-
-    assert!(seq
-        .get_hour_with_timestamp(&tcode_hmsf!(03:00:00:00))
-        .is_none());
-}
-
-#[test]
-#[allow(clippy::zero_prefixed_literal)]
-fn sequence_get_or_create_hour() {
-    let mut seq = Sequence::<f64>::new();
-
-    assert!(seq.get_or_create_hour_with_isize(&2).is_some());
-    assert!(seq
-        .get_or_create_hour_with_timestamp(&tcode_hmsf!(03:00:00:00))
-        .is_some());
-
-    assert!(seq
-        .get_hour_with_timestamp(&tcode_hmsf!(01:00:00:00))
-        .is_none());
 }
 
 #[test]
@@ -532,4 +550,27 @@ fn sequence_add_keyframe_at_timestamp() {
     assert!(seq
         .add_keyframe_at_timestamp(Keyframe { value: 1.0 }, &tcode_hmsf!(00:00:10:00))
         .is_some());
+}
+
+#[test]
+#[allow(clippy::zero_prefixed_literal)]
+fn sequence_get_keyframes_between() {
+    let mut seq = Sequence::<f64>::new();
+
+    assert!(seq
+        .add_keyframe_at_timestamp(Keyframe { value: 0.5 }, &tcode_hmsf!(00:00:05:00))
+        .is_some());
+    assert!(seq
+        .add_keyframe_at_timestamp(Keyframe { value: 1.0 }, &tcode_hmsf!(00:02:00:00))
+        .is_some());
+
+    let keyframes = seq.get_keyframes_between(
+        &tcode_hmsf!(00:00:00:00),
+        &tcode_hmsf!(00:05:00:00),
+        &Framerate::Fixed(24.0),
+    );
+
+    assert!(keyframes.len() == 2);
+
+    println!("sequence_get_keyframes_between: {:?}", keyframes);
 }
