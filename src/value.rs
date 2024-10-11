@@ -1,6 +1,7 @@
 // Copyright 2024 the Interpoli Authors
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
+use alloc::fmt::Debug;
 use alloc::vec::Vec;
 use peniko::{self, kurbo};
 
@@ -155,7 +156,7 @@ impl<T: Tween> Animated<T> {
 }
 
 /// Something that can be interpolated with an easing function.
-pub trait Tween: Clone + Default {
+pub trait Tween: Debug + Clone + Default {
     fn tween(&self, other: &Self, t: f64, easing: &Easing) -> Self;
 }
 
@@ -174,6 +175,13 @@ impl Tween for f64 {
         //    *other,
         //    t,
         //)
+    }
+}
+
+impl Tween for f32 {
+    fn tween(&self, other: &Self, t: f64, _easing: &Easing) -> Self {
+        // Same TODO as f64
+        keyframe::ease(keyframe::functions::Linear, *self, *other, t)
     }
 }
 

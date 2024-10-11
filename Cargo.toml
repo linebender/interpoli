@@ -27,6 +27,7 @@ targets = []
 
 [dependencies]
 hashbrown = "0.14.5"
+anymap = { version = "1.0.0-beta.2", default-features = false, features = ["hashbrown"] }
 keyframe = { version = "1.1.1", default-features = false }
 kurbo = { version = "0.11", default-features = false }
 peniko = { version = "0.1.1", default-features = false }
