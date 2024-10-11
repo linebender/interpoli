@@ -145,6 +145,11 @@ impl Timecode {
         &self.framerate
     }
 
+    #[inline]
+    pub fn set_framerate(&mut self, fr: Framerate) {
+        self.framerate = fr;
+    }
+
     pub fn correct_with_framerate(&mut self, fr: Framerate) -> &Self {
         self.framerate = fr;
         self.correct_overflow();
@@ -155,12 +160,12 @@ impl Timecode {
     fn correct_overflow(&mut self) {
         let framerate = self.framerate.as_f64();
 
-        if framerate != 0.0 {
-            while self.nanoframes > 999999999 {
-                self.frames += 1;
-                self.nanoframes -= 1000000000;
-            }
+        while self.nanoframes > 999_999_999 {
+            self.frames += 1;
+            self.nanoframes -= 1_000_000_000;
+        }
 
+        if framerate != 0.0 {
             while self.frames >= framerate as isize {
                 self.seconds += 1;
                 self.frames -= framerate as isize;
@@ -181,12 +186,12 @@ impl Timecode {
     fn correct_underflow(&mut self) {
         let framerate = self.framerate.as_f64();
 
-        if framerate != 0.0 {
-            while self.nanoframes < 0 {
-                self.frames -= 1;
-                self.nanoframes += 1000000000;
-            }
+        while self.nanoframes < 0 {
+            self.frames -= 1;
+            self.nanoframes += 1_000_000_000;
+        }
 
+        if framerate != 0.0 {
             while self.frames < 0 {
                 self.seconds -= 1;
                 self.frames += framerate as isize;
@@ -264,7 +269,7 @@ impl Timecode {
     }
 
     pub fn add_by_timestamp(&mut self, t: Timecode) {
-        let nanos = t.as_nanoseconds();
+        let nanos = t.as_nanoseconds_with_framerate(&self.framerate, false);
         self.nanoframes += nanos * self.framerate.as_f64() as isize;
 
         self.correct_overflow();
@@ -303,7 +308,7 @@ impl Timecode {
     }
 
     pub fn sub_by_timestamp(&mut self, t: Timecode) {
-        let nanos = t.as_nanoseconds();
+        let nanos = t.as_nanoseconds_with_framerate(&self.framerate, false);
         self.nanoframes -= nanos * self.framerate.as_f64() as isize;
 
         self.correct_underflow();
@@ -328,10 +333,10 @@ impl Timecode {
     }
 
     pub fn as_nanoseconds(&self) -> isize {
-        self.as_nanoseconds_with_framerate(&self.framerate)
+        self.as_nanoseconds_with_framerate(&self.framerate, false)
     }
 
-    pub fn as_nanoseconds_with_framerate(&self, fr: &Framerate) -> isize {
+    pub fn as_nanoseconds_with_framerate(&self, fr: &Framerate, for_tweening: bool) -> isize {
         let mut nanos: isize = 0;
         let framerate = if fr.as_f64() != 0.0 {
             fr.as_f64()
@@ -340,7 +345,7 @@ impl Timecode {
             1.0
         };
 
-        if let Framerate::Interpolated(_f) = fr {
+        if matches!(fr, Framerate::Interpolated(_f)) || !for_tweening {
             nanos += self.nanoframes / framerate as isize;
         }
 
@@ -367,9 +372,9 @@ impl Timecode {
         // TODO: There should've be a much efficient way to do this.
         // But i think it'll work for now...
 
-        let t = self.as_nanoseconds();
-        let a = begin.as_nanoseconds_with_framerate(&self.framerate);
-        let b = end.as_nanoseconds_with_framerate(&self.framerate);
+        let t = self.as_nanoseconds_with_framerate(&self.framerate, true);
+        let a = begin.as_nanoseconds_with_framerate(&self.framerate, true);
+        let b = end.as_nanoseconds_with_framerate(&self.framerate, true);
 
         let a_f64 = a as f64;
         let b_f64 = b as f64;
@@ -486,7 +491,6 @@ impl<T: Tween> StaticTimeline<T> {
 #[derive(Debug)]
 pub struct Timeline {
     time: Timecode,
-    last_time: Timecode,
     sequences: AnyMap,
     children: Vec<Timeline>,
     max_sequences: usize,
@@ -497,7 +501,6 @@ impl Timeline {
     pub fn new(fr: Framerate) -> Self {
         Self {
             time: tcode_hmsf_framerate!(00:00:00:00, fr),
-            last_time: tcode_hmsf_framerate!(00:00:00:00, fr),
             sequences: AnyMap::new(),
             children: Vec::new(),
             max_sequences: 0,
@@ -608,12 +611,33 @@ impl Timeline {
     pub fn set_by_timestamp(&mut self, t: Timecode) {
         self.time.set_by_timestamp(t);
     }
+
+    /// # Panics
+    ///
+    /// TODO!
+    #[inline]
+    pub fn tween_by_name<T: Tween + 'static>(&mut self, sequence_name: &str) -> T {
+        let time = self.time.clone();
+        let sequence = self.get_sequence_with_name(sequence_name).unwrap();
+        sequence.tween(&time)
+    }
+
+    /// # Panics
+    ///
+    /// TODO!
+    #[inline]
+    pub fn tween_by_pointer<T: Tween + 'static>(&mut self, sequence_ptr: usize) -> T {
+        let time = self.time.clone();
+        let sequence = self.get_sequence_with_pointer(sequence_ptr).unwrap();
+        sequence.tween(&time)
+    }
 }
 
 #[derive(Debug)]
 pub struct Sequence<T: Tween> {
     engine: AnimationEngine<T>,
     tree: BTreeMap<isize, SecondLeaf<T>>,
+    last_time: Timecode,
 }
 
 impl<T: Tween> Default for Sequence<T> {
@@ -627,7 +651,35 @@ impl<T: Tween> Sequence<T> {
         Self {
             engine: AnimationEngine::default(),
             tree: BTreeMap::new(),
+            last_time: tcode_hmsf!(00:00:00:00),
         }
+    }
+
+    /// # Panics
+    ///
+    /// TODO!
+    pub fn tween(&mut self, time: &Timecode) -> T {
+        if self.engine.is_empty() {
+            let current_keyframe_binding =
+                self.get_keyframes_between(&self.last_time, time, time.framerate());
+            let current_keyframe = current_keyframe_binding.last().unwrap();
+
+            let last_keyframe = self
+                .find_first_keyframe_after_timestamp(&current_keyframe.0, time.framerate())
+                .unwrap();
+
+            self.engine.set_new_animation(
+                current_keyframe.0.clone(),
+                last_keyframe.0.clone(),
+                current_keyframe.1.clone(),
+                last_keyframe.1.clone(),
+            );
+
+            self.last_time.set_by_timestamp(time.clone());
+            self.last_time.set_framerate(*time.framerate());
+        }
+
+        self.engine.tween(time)
     }
 
     // Create and get second
@@ -710,10 +762,15 @@ impl<T: Tween> Sequence<T> {
     /// TODO!
     pub fn add_keyframes_at_timestamp(&mut self, keyframes: Vec<(Keyframe<T>, &Timecode)>) {
         for k in keyframes {
+            // TODO: Make it so it returns 'None' instead of panicking.
             self.add_keyframe_at_timestamp(k.0, k.1);
         }
     }
 
+    /// # Panics
+    ///
+    /// TODO!
+    #[inline]
     pub fn get_keyframes_between(
         &self,
         begin: &Timecode,
@@ -732,12 +789,48 @@ impl<T: Tween> Sequence<T> {
                 continue;
             }
 
+            // TODO: Make it so it returns 'None' instead of panicking.
             let sec_leaf: &SecondLeaf<T> = sec_leaf_search.unwrap();
 
             sec_leaf.get_keyframes_between(begin, end, i, fr, &mut final_vec);
         }
 
         final_vec
+    }
+
+    /// # Panics
+    ///
+    /// TODO!
+    #[inline]
+    pub fn find_first_keyframe_after_timestamp(
+        &self,
+        timestamp: &Timecode,
+        fr: &Framerate,
+    ) -> Option<(Timecode, Keyframe<T>)> {
+        let begin_secs =
+            (timestamp.hours() * 3600) + (timestamp.minutes() * 60) + timestamp.seconds();
+        let end_secs = *self.tree.iter().next_back().unwrap().0 + 1;
+
+        for i in begin_secs..end_secs {
+            let sec_leaf_search: Option<&SecondLeaf<T>> = self.tree.get(&i);
+
+            if sec_leaf_search.is_none() {
+                continue;
+            }
+
+            // TODO: Make it so it returns 'None' instead of panicking.
+            let sec_leaf: &SecondLeaf<T> = sec_leaf_search.unwrap();
+
+            let keyframe = sec_leaf.find_first_keyframe_after_timestamp(timestamp, i, fr);
+
+            if keyframe.is_none() {
+                continue;
+            }
+
+            return keyframe;
+        }
+
+        None
     }
 }
 
@@ -791,6 +884,7 @@ impl<T: Tween> SecondLeaf<T> {
         self.get_frame_with_isize(frame)
     }
 
+    #[inline]
     pub fn get_keyframes_between(
         &self,
         begin: &Timecode,
@@ -816,7 +910,7 @@ impl<T: Tween> SecondLeaf<T> {
                 continue;
             }
 
-            if *fra_leaf.0 > end_frames {
+            if *fra_leaf.0 >= end_frames {
                 break;
             }
 
@@ -825,10 +919,45 @@ impl<T: Tween> SecondLeaf<T> {
                 end,
                 current_second,
                 *fra_leaf.0,
-                &fr,
+                fr,
                 final_vec,
             );
         }
+    }
+
+    #[inline]
+    pub fn find_first_keyframe_after_timestamp(
+        &self,
+        timestamp: &Timecode,
+        current_second: isize,
+        fr: &Framerate,
+    ) -> Option<(Timecode, Keyframe<T>)> {
+        let begin_frames: isize = if current_second == *timestamp.seconds() {
+            *timestamp.frames()
+        } else {
+            0
+        };
+
+        for fra_leaf in &self.frames {
+            if *fra_leaf.0 < begin_frames {
+                continue;
+            }
+
+            let keyframe = fra_leaf.1.find_first_keyframe_after_timestamp(
+                timestamp,
+                current_second,
+                *fra_leaf.0,
+                fr,
+            );
+
+            if keyframe.is_none() {
+                continue;
+            }
+
+            return keyframe;
+        }
+
+        None
     }
 
     #[inline]
@@ -887,6 +1016,7 @@ impl<T: Tween> FrameLeaf<T> {
         self.get_keyframe_at_isize(time.nanoframes())
     }
 
+    #[inline]
     pub fn get_keyframes_between(
         &self,
         begin: &Timecode,
@@ -913,17 +1043,48 @@ impl<T: Tween> FrameLeaf<T> {
                 continue;
             }
 
-            if *nano_leaf.0 > end_nanos {
+            if *nano_leaf.0 >= end_nanos {
                 break;
             }
 
             let nanoframes = *nano_leaf.0;
 
             final_vec.push((
-                tcode_full!(00:00:current_second:current_frame:nanoframes, fr.clone()),
+                tcode_full!(00:00:current_second:current_frame:nanoframes, *fr),
                 nano_leaf.1.clone(),
             ));
         }
+    }
+
+    #[inline]
+    pub fn find_first_keyframe_after_timestamp(
+        &self,
+        timestamp: &Timecode,
+        current_second: isize,
+        current_frame: isize,
+        fr: &Framerate,
+    ) -> Option<(Timecode, Keyframe<T>)> {
+        let begin_nanos: isize = if current_frame == *timestamp.frames() {
+            *timestamp.nanoframes()
+        } else {
+            0
+        };
+
+        for nano_leaf in &self.nanos {
+            if *nano_leaf.0 < begin_nanos {
+                continue;
+            }
+
+            let nanoframes = *nano_leaf.0;
+
+            let time = tcode_full!(00:00:current_second:current_frame:nanoframes, *fr);
+
+            if !time.is_equals_to_hmsf(timestamp) {
+                return Some((time, nano_leaf.1.clone()));
+            }
+        }
+
+        None
     }
 }
 

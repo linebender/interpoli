@@ -574,3 +574,86 @@ fn sequence_get_keyframes_between() {
 
     println!("sequence_get_keyframes_between: {:?}", keyframes);
 }
+
+#[test]
+#[allow(clippy::zero_prefixed_literal)]
+fn sequence_find_first_keyframe_after_timestamp() {
+    #[cfg(feature = "std")]
+    use std::time::Instant;
+
+    let mut seq = Sequence::<f64>::new();
+
+    assert!(seq
+        .add_keyframe_at_timestamp(Keyframe { value: 0.5 }, &tcode_hmsf!(00:00:05:00))
+        .is_some());
+    assert!(seq
+        .add_keyframe_at_timestamp(Keyframe { value: 1.0 }, &tcode_hmsf!(00:00:06:00))
+        .is_some());
+
+    #[cfg(feature = "std")]
+    let instant = Instant::now();
+
+    let keyframe =
+        seq.find_first_keyframe_after_timestamp(&tcode_hmsf!(00:00:05:00), &Framerate::Fixed(24.0));
+
+    #[cfg(feature = "std")]
+    println!("time: {:?}", instant.elapsed());
+
+    assert!(keyframe.is_some());
+
+    println!(
+        "sequence_find_first_keyframe_after_timestamp: {:?}",
+        keyframe
+    );
+}
+
+#[test]
+#[allow(clippy::zero_prefixed_literal)]
+fn tline_animation_test_one() {
+    let mut timeline = Timeline::new(Framerate::Fixed(60.0));
+
+    let sequence: &mut Sequence<f64> = timeline.new_sequence("animation_sequence").unwrap();
+
+    sequence.add_keyframe_at_timestamp(Keyframe { value: 0.0 }, &tcode_hmsf!(00:00:00:00));
+    sequence.add_keyframe_at_timestamp(Keyframe { value: 1.0 }, &tcode_hmsf!(00:00:01:00));
+
+    timeline.add_by_timestamp(tcode_hmsf!(00:00:00:30));
+
+    let result: f64 = timeline.tween_by_name("animation_sequence");
+
+    println!("tline_animation_test_one: {:?}", result);
+}
+
+#[test]
+#[allow(clippy::zero_prefixed_literal)]
+fn tline_animation_test_two() {
+    let mut timeline_one = Timeline::new(Framerate::Fixed(1.0));
+    let mut timeline_two = Timeline::new(Framerate::Interpolated(1.0));
+
+    let sequence_one: &mut Sequence<f64> = timeline_one.new_sequence("sequence").unwrap();
+    let sequence_two: &mut Sequence<f64> = timeline_two.new_sequence("sequence").unwrap();
+
+    sequence_one.add_keyframe_at_timestamp(Keyframe { value: 0.0 }, &tcode_hmsf!(00:00:00:00));
+    sequence_one.add_keyframe_at_timestamp(Keyframe { value: 1.0 }, &tcode_hmsf!(00:00:00:01));
+
+    for i in 0..10 {
+        timeline_one.add_by_timestamp(tcode_full!(00:00:00:00:100_000_000, Framerate::Timestamp));
+        println!(
+            "tline_animation_test_two (fixed) ({:?}): {:?}",
+            timeline_one.tween_by_name::<f64>("sequence"),
+            i
+        );
+    }
+
+    sequence_two.add_keyframe_at_timestamp(Keyframe { value: 0.0 }, &tcode_hmsf!(00:00:00:00));
+    sequence_two.add_keyframe_at_timestamp(Keyframe { value: 1.0 }, &tcode_hmsf!(00:00:00:01));
+
+    for i in 0..10 {
+        timeline_two.add_by_timestamp(tcode_full!(00:00:00:00:100_000_000, Framerate::Timestamp));
+        println!(
+            "tline_animation_test_two (inter) ({:?}): {:?}",
+            timeline_two.tween_by_name::<f64>("sequence"),
+            i
+        );
+    }
+}
