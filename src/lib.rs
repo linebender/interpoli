@@ -609,7 +609,7 @@ fn sequence_find_first_keyframe_after_timestamp() {
 
 #[test]
 #[allow(clippy::zero_prefixed_literal)]
-fn tline_animation_test_one() {
+fn tline_basic_linear_animation() {
     let mut timeline = Timeline::new(Framerate::Fixed(60.0));
 
     let sequence: &mut Sequence<f64> = timeline.new_sequence("animation_sequence").unwrap();
@@ -626,7 +626,7 @@ fn tline_animation_test_one() {
 
 #[test]
 #[allow(clippy::zero_prefixed_literal)]
-fn tline_animation_test_two() {
+fn tline_animation_fixed_vs_inter() {
     let mut timeline_one = Timeline::new(Framerate::Fixed(1.0));
     let mut timeline_two = Timeline::new(Framerate::Interpolated(1.0));
 
@@ -636,24 +636,33 @@ fn tline_animation_test_two() {
     sequence_one.add_keyframe_at_timestamp(Keyframe { value: 0.0 }, &tcode_hmsf!(00:00:00:00));
     sequence_one.add_keyframe_at_timestamp(Keyframe { value: 1.0 }, &tcode_hmsf!(00:00:00:01));
 
+    println!("tline_animation_fixed_vs_inter (fixed):");
+    println!("========================");
+
     for i in 0..10 {
         timeline_one.add_by_timestamp(tcode_full!(00:00:00:00:100_000_000, Framerate::Timestamp));
         println!(
-            "tline_animation_test_two (fixed) ({:?}): {:?}",
-            timeline_one.tween_by_name::<f64>("sequence"),
-            i
+            "(Nanoframe {:?}): {:?}",
+            (i + 1) * 100_000_000,
+            timeline_one.tween_by_name::<f64>("sequence")
         );
     }
 
     sequence_two.add_keyframe_at_timestamp(Keyframe { value: 0.0 }, &tcode_hmsf!(00:00:00:00));
     sequence_two.add_keyframe_at_timestamp(Keyframe { value: 1.0 }, &tcode_hmsf!(00:00:00:01));
 
+    println!("========================");
+    println!("tline_animation_fixed_vs_inter (inter):");
+    println!("========================");
+
     for i in 0..10 {
         timeline_two.add_by_timestamp(tcode_full!(00:00:00:00:100_000_000, Framerate::Timestamp));
         println!(
-            "tline_animation_test_two (inter) ({:?}): {:?}",
+            "(Nanoframe {:?}): {:?}",
+            (i + 1) * 100_000_000,
             timeline_two.tween_by_name::<f64>("sequence"),
-            i
         );
     }
+
+    println!("========================");
 }

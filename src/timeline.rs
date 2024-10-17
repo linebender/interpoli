@@ -55,6 +55,7 @@ pub struct Timecode {
 }
 
 #[allow(unused_macros)]
+#[macro_export]
 macro_rules! tcode_hmsf {
     ($h:tt:$m:tt:$s:tt:$f:tt) => {
         Timecode::new($h, $m, $s, $f)
@@ -62,6 +63,7 @@ macro_rules! tcode_hmsf {
 }
 
 #[allow(unused_macros)]
+#[macro_export]
 macro_rules! tcode_hmsf_framerate {
     ($h:tt:$m:tt:$s:tt:$f:tt, $fr:expr) => {
         Timecode::new_with_framerate($h, $m, $s, $f, 0, $fr)
@@ -69,6 +71,7 @@ macro_rules! tcode_hmsf_framerate {
 }
 
 #[allow(unused_macros)]
+#[macro_export]
 macro_rules! tcode_hms {
     ($h:tt:$m:tt:$s:tt) => {
         Timecode::new($h, $m, $s, 0)
@@ -76,6 +79,7 @@ macro_rules! tcode_hms {
 }
 
 #[allow(unused_macros)]
+#[macro_export]
 macro_rules! tcode_full {
     ($h:tt:$m:tt:$s:tt:$f:tt:$nf:tt, $fr:expr) => {
         Timecode::new_with_framerate($h, $m, $s, $f, $nf, $fr)
@@ -377,10 +381,10 @@ impl Timecode {
         let b = end.as_nanoseconds_with_framerate(&self.framerate, true);
 
         let a_f64 = a as f64;
-        let b_f64 = b as f64;
-        let t_f64 = t as f64;
+        let b_f64 = b as f64 - a_f64;
+        let t_f64 = t as f64 - a_f64;
 
-        let lerp = a_f64 + (b_f64 - a_f64) * (t_f64 / b_f64);
+        let lerp = 0.0 + (b_f64 - 0.0) * (t_f64 / b_f64);
 
         lerp / b_f64
     }
@@ -485,6 +489,26 @@ impl<T: Tween> StaticTimeline<T> {
 
     pub fn set_by_timestamp(&mut self, t: Timecode) {
         self.time.set_by_timestamp(t);
+    }
+
+    /// # Panics
+    ///
+    /// TODO!
+    #[inline]
+    pub fn tween_by_name(&mut self, sequence_name: &str) -> T {
+        let time = self.time.clone();
+        let sequence = self.get_sequence_with_name(sequence_name).unwrap();
+        sequence.tween(&time)
+    }
+
+    /// # Panics
+    ///
+    /// TODO!
+    #[inline]
+    pub fn tween_by_pointer(&mut self, sequence_ptr: usize) -> T {
+        let time = self.time.clone();
+        let sequence = self.get_sequence_with_pointer(sequence_ptr).unwrap();
+        sequence.tween(&time)
     }
 }
 
@@ -659,21 +683,28 @@ impl<T: Tween> Sequence<T> {
     ///
     /// TODO!
     pub fn tween(&mut self, time: &Timecode) -> T {
-        if self.engine.is_empty() {
+        // TODO: Make it so it returns 'T::default' instead of panicking.
+        if !self.engine.is_running() && !self.engine.is_sequence_ended() {
             let current_keyframe_binding =
                 self.get_keyframes_between(&self.last_time, time, time.framerate());
             let current_keyframe = current_keyframe_binding.last().unwrap();
 
-            let last_keyframe = self
-                .find_first_keyframe_after_timestamp(&current_keyframe.0, time.framerate())
-                .unwrap();
+            let last_keyframe_wrapped =
+                self.find_first_keyframe_after_timestamp(&current_keyframe.0, time.framerate());
 
-            self.engine.set_new_animation(
-                current_keyframe.0.clone(),
-                last_keyframe.0.clone(),
-                current_keyframe.1.clone(),
-                last_keyframe.1.clone(),
-            );
+            match last_keyframe_wrapped {
+                Some(last_keyframe) => {
+                    self.engine.set_new_animation(
+                        current_keyframe.0.clone(),
+                        last_keyframe.0.clone(),
+                        current_keyframe.1.clone(),
+                        last_keyframe.1.clone(),
+                    );
+                }
+                None => {
+                    self.engine.set_new_end(current_keyframe.1.clone());
+                }
+            }
 
             self.last_time.set_by_timestamp(time.clone());
             self.last_time.set_framerate(*time.framerate());
@@ -899,18 +930,18 @@ impl<T: Tween> SecondLeaf<T> {
             0
         };
 
-        let end_frames: isize = if current_second == *end.seconds() + 1 {
+        let end_frames: isize = if current_second == *end.seconds() {
             *end.frames()
         } else {
             fr.as_f64() as isize
         };
 
         for fra_leaf in &self.frames {
-            if *fra_leaf.0 < begin_frames {
+            if *fra_leaf.0 < begin_frames - 1 {
                 continue;
             }
 
-            if *fra_leaf.0 >= end_frames {
+            if *fra_leaf.0 > end_frames {
                 break;
             }
 
@@ -1026,24 +1057,26 @@ impl<T: Tween> FrameLeaf<T> {
         fr: &Framerate,
         final_vec: &mut Vec<(Timecode, Keyframe<T>)>,
     ) {
-        let begin_nanos: isize = if current_frame == *begin.frames() {
-            *begin.nanoframes()
-        } else {
-            0
-        };
+        let begin_nanos: isize =
+            if current_second == *begin.seconds() && current_frame == *begin.frames() {
+                *begin.nanoframes()
+            } else {
+                0
+            };
 
-        let end_nanos: isize = if current_frame == *end.frames() + 1 {
+        let end_nanos: isize = if current_second == *end.seconds() && current_frame == *end.frames()
+        {
             *end.nanoframes()
         } else {
             1_000_000_000
         };
 
         for nano_leaf in &self.nanos {
-            if *nano_leaf.0 < begin_nanos {
+            if *nano_leaf.0 < begin_nanos - 1 {
                 continue;
             }
 
-            if *nano_leaf.0 >= end_nanos {
+            if *nano_leaf.0 > end_nanos {
                 break;
             }
 
@@ -1097,16 +1130,21 @@ pub struct AnimationEngine<T: Tween> {
     status: AnimationEngineStatus,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub enum AnimationEngineStatus {
     #[default]
     Empty,
     Running,
     Ended,
+    SequenceEnded,
 }
 
 impl<T: Tween> AnimationEngine<T> {
     pub fn tween(&mut self, current_time: &Timecode) -> T {
+        if self.status == AnimationEngineStatus::SequenceEnded {
+            return self.k_end.value.clone();
+        }
+
         let time = current_time.get_lerp_time_between(&self.t_begin, &self.t_end);
 
         if time >= 1.0 {
@@ -1133,6 +1171,11 @@ impl<T: Tween> AnimationEngine<T> {
         self.status = AnimationEngineStatus::Running;
     }
 
+    pub fn set_new_end(&mut self, k: Keyframe<T>) {
+        self.k_end = k;
+        self.status = AnimationEngineStatus::SequenceEnded;
+    }
+
     pub fn is_empty(&self) -> bool {
         matches!(self.status, AnimationEngineStatus::Empty)
     }
@@ -1143,6 +1186,10 @@ impl<T: Tween> AnimationEngine<T> {
 
     pub fn has_ended(&self) -> bool {
         matches!(self.status, AnimationEngineStatus::Ended)
+    }
+
+    pub fn is_sequence_ended(&self) -> bool {
+        matches!(self.status, AnimationEngineStatus::SequenceEnded)
     }
 }
 
