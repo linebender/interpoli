@@ -9,9 +9,14 @@ use alloc::{
     string::{String, ToString},
     vec::Vec,
 };
-use anymap::hashbrown::AnyMap;
-use core::time::Duration;
+use anymap::hashbrown::Map;
+use core::{
+    time::Duration,
+    any::Any,
+};
 use hashbrown::HashMap;
+
+pub type AnyMap = Map<dyn Any + Send + Sync + 'static>;
 
 #[derive(Copy, Debug, Clone)]
 pub enum Framerate {

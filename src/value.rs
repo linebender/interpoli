@@ -156,7 +156,7 @@ impl<T: Tween> Animated<T> {
 }
 
 /// Something that can be interpolated with an easing function.
-pub trait Tween: Debug + Clone + Default {
+pub trait Tween: Debug + Clone + Default + Send + Sync {
     #[must_use]
     fn tween(&self, other: &Self, t: f64, easing: &Easing) -> Self;
 }
