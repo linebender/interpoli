@@ -400,6 +400,30 @@ impl Timecode {
         false
     }
 
+    pub fn is_less_than_full(&self, t: &Timecode) -> bool {
+        if self.hours < t.hours {
+            return true;
+        }
+
+        if self.minutes < t.minutes {
+            return true;
+        }
+
+        if self.seconds < t.seconds {
+            return true;
+        }
+
+        if self.frames < t.frames {
+            return true;
+        }
+
+        if self.nanoframes < t.nanoframes {
+            return true;
+        }
+
+        false
+    }
+
     // Utils
 
     pub fn get_lerp_time_between(&self, begin: &Timecode, end: &Timecode) -> f64 {
@@ -1241,7 +1265,7 @@ impl<T: Tween> FrameLeaf<T> {
 
             let time = tcode_full!(00:00:current_second:current_frame:nanoframes, *fr);
 
-            if !time.is_equals_to_hmsf(timestamp) {
+            if !time.is_equals_to_full(timestamp) {
                 return Some((time, nano_leaf.1.clone()));
             }
         }
@@ -1272,7 +1296,7 @@ impl<T: Tween> FrameLeaf<T> {
 
             let time = tcode_full!(00:00:current_second:current_frame:nanoframes, *fr);
 
-            if !time.is_equals_to_hmsf(timestamp) {
+            if !time.is_equals_to_full(timestamp) {
                 return Some((time, nano_leaf.1.clone()));
             }
         }
