@@ -10,10 +10,7 @@ use alloc::{
     vec::Vec,
 };
 use anymap::hashbrown::Map;
-use core::{
-    time::Duration,
-    any::Any,
-};
+use core::{any::Any, time::Duration};
 use hashbrown::HashMap;
 
 pub type AnyMap = Map<dyn Any + Send + Sync + 'static>;
@@ -375,6 +372,34 @@ impl Timecode {
             && self.hours == t.hours
     }
 
+    pub fn is_equals_to_full(&self, t: &Timecode) -> bool {
+        self.nanoframes == t.nanoframes
+            && self.frames == t.frames
+            && self.seconds == t.seconds
+            && self.minutes == t.minutes
+            && self.hours == t.hours
+    }
+
+    pub fn is_less_than_hmsf(&self, t: &Timecode) -> bool {
+        if self.hours < t.hours {
+            return true;
+        }
+
+        if self.minutes < t.minutes {
+            return true;
+        }
+
+        if self.seconds < t.seconds {
+            return true;
+        }
+
+        if self.frames < t.frames {
+            return true;
+        }
+
+        false
+    }
+
     // Utils
 
     pub fn get_lerp_time_between(&self, begin: &Timecode, end: &Timecode) -> f64 {
@@ -690,24 +715,53 @@ impl<T: Tween> Sequence<T> {
     pub fn tween(&mut self, time: &Timecode) -> T {
         // TODO: Make it so it returns 'T::default' instead of panicking.
         if !self.engine.is_running() && !self.engine.is_sequence_ended() {
-            let current_keyframe_binding =
-                self.get_keyframes_between(&self.last_time, time, time.framerate());
-            let current_keyframe = current_keyframe_binding.last().unwrap();
+            let current_keyframe_binding: Vec<(Timecode, Keyframe<T>)>;
+            let current_keyframe: &(Timecode, Keyframe<T>);
+            let last_keyframe_wrapped: Option<(Timecode, Keyframe<T>)>;
 
-            let last_keyframe_wrapped =
-                self.find_first_keyframe_after_timestamp(&current_keyframe.0, time.framerate());
+            if self.engine.has_ended_forwards() || self.engine.is_empty() {
+                current_keyframe_binding =
+                    self.get_keyframes_between(&self.last_time, time, time.framerate());
 
-            match last_keyframe_wrapped {
-                Some(last_keyframe) => {
-                    self.engine.set_new_animation(
-                        current_keyframe.0.clone(),
-                        last_keyframe.0.clone(),
-                        current_keyframe.1.clone(),
-                        last_keyframe.1.clone(),
-                    );
+                current_keyframe = current_keyframe_binding.last().unwrap();
+
+                last_keyframe_wrapped =
+                    self.find_first_keyframe_after_timestamp(&current_keyframe.0, time.framerate());
+
+                match last_keyframe_wrapped {
+                    Some(last_keyframe) => {
+                        self.engine.set_new_animation(
+                            current_keyframe.0.clone(),
+                            last_keyframe.0.clone(),
+                            current_keyframe.1.clone(),
+                            last_keyframe.1.clone(),
+                        );
+                    }
+                    None => {
+                        self.engine.set_new_end(current_keyframe.1.clone());
+                    }
                 }
-                None => {
-                    self.engine.set_new_end(current_keyframe.1.clone());
+            } else {
+                current_keyframe_binding =
+                    self.get_keyframes_between(time, &self.last_time, time.framerate());
+
+                current_keyframe = current_keyframe_binding.first().unwrap();
+
+                last_keyframe_wrapped = self
+                    .find_first_keyframe_before_timestamp(&current_keyframe.0, time.framerate());
+
+                match last_keyframe_wrapped {
+                    Some(last_keyframe) => {
+                        self.engine.set_new_animation(
+                            last_keyframe.0.clone(),
+                            current_keyframe.0.clone(),
+                            last_keyframe.1.clone(),
+                            current_keyframe.1.clone(),
+                        );
+                    }
+                    None => {
+                        self.engine.set_new_end(current_keyframe.1.clone());
+                    }
                 }
             }
 
@@ -868,6 +922,41 @@ impl<T: Tween> Sequence<T> {
 
         None
     }
+
+    /// # Panics
+    ///
+    /// TODO!
+    #[inline]
+    pub fn find_first_keyframe_before_timestamp(
+        &self,
+        timestamp: &Timecode,
+        fr: &Framerate,
+    ) -> Option<(Timecode, Keyframe<T>)> {
+        let begin_secs =
+            (timestamp.hours() * 3600) + (timestamp.minutes() * 60) + timestamp.seconds();
+        let end_secs = 0;
+
+        for i in (end_secs..begin_secs).rev() {
+            let sec_leaf_search: Option<&SecondLeaf<T>> = self.tree.get(&i);
+
+            if sec_leaf_search.is_none() {
+                continue;
+            }
+
+            // TODO: Make it so it returns 'None' instead of panicking.
+            let sec_leaf: &SecondLeaf<T> = sec_leaf_search.unwrap();
+
+            let keyframe = sec_leaf.find_first_keyframe_before_timestamp(timestamp, i, fr);
+
+            if keyframe.is_none() {
+                continue;
+            }
+
+            return keyframe;
+        }
+
+        None
+    }
 }
 
 #[derive(Debug)]
@@ -980,6 +1069,41 @@ impl<T: Tween> SecondLeaf<T> {
             }
 
             let keyframe = fra_leaf.1.find_first_keyframe_after_timestamp(
+                timestamp,
+                current_second,
+                *fra_leaf.0,
+                fr,
+            );
+
+            if keyframe.is_none() {
+                continue;
+            }
+
+            return keyframe;
+        }
+
+        None
+    }
+
+    #[inline]
+    pub fn find_first_keyframe_before_timestamp(
+        &self,
+        timestamp: &Timecode,
+        current_second: isize,
+        fr: &Framerate,
+    ) -> Option<(Timecode, Keyframe<T>)> {
+        let begin_frames: isize = if current_second == *timestamp.seconds() {
+            *timestamp.frames()
+        } else {
+            0
+        };
+
+        for fra_leaf in self.frames.iter().rev() {
+            if *fra_leaf.0 > begin_frames {
+                continue;
+            }
+
+            let keyframe = fra_leaf.1.find_first_keyframe_before_timestamp(
                 timestamp,
                 current_second,
                 *fra_leaf.0,
@@ -1124,6 +1248,37 @@ impl<T: Tween> FrameLeaf<T> {
 
         None
     }
+
+    #[inline]
+    pub fn find_first_keyframe_before_timestamp(
+        &self,
+        timestamp: &Timecode,
+        current_second: isize,
+        current_frame: isize,
+        fr: &Framerate,
+    ) -> Option<(Timecode, Keyframe<T>)> {
+        let begin_nanos: isize = if current_frame == *timestamp.frames() {
+            *timestamp.nanoframes()
+        } else {
+            0
+        };
+
+        for nano_leaf in self.nanos.iter().rev() {
+            if *nano_leaf.0 > begin_nanos {
+                continue;
+            }
+
+            let nanoframes = *nano_leaf.0;
+
+            let time = tcode_full!(00:00:current_second:current_frame:nanoframes, *fr);
+
+            if !time.is_equals_to_hmsf(timestamp) {
+                return Some((time, nano_leaf.1.clone()));
+            }
+        }
+
+        None
+    }
 }
 
 #[derive(Debug, Default)]
@@ -1140,7 +1295,8 @@ pub enum AnimationEngineStatus {
     #[default]
     Empty,
     Running,
-    Ended,
+    EndedForwards,
+    EndedBackwards,
     SequenceEnded,
 }
 
@@ -1153,7 +1309,9 @@ impl<T: Tween> AnimationEngine<T> {
         let time = current_time.get_lerp_time_between(&self.t_begin, &self.t_end);
 
         if time >= 1.0 {
-            self.status = AnimationEngineStatus::Ended;
+            self.status = AnimationEngineStatus::EndedForwards;
+        } else if time < 0.0 {
+            self.status = AnimationEngineStatus::EndedBackwards;
         }
 
         self.k_begin
@@ -1189,8 +1347,12 @@ impl<T: Tween> AnimationEngine<T> {
         matches!(self.status, AnimationEngineStatus::Running)
     }
 
-    pub fn has_ended(&self) -> bool {
-        matches!(self.status, AnimationEngineStatus::Ended)
+    pub fn has_ended_forwards(&self) -> bool {
+        matches!(self.status, AnimationEngineStatus::EndedForwards)
+    }
+
+    pub fn has_ended_backwards(&self) -> bool {
+        matches!(self.status, AnimationEngineStatus::EndedBackwards)
     }
 
     pub fn is_sequence_ended(&self) -> bool {
