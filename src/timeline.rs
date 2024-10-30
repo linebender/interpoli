@@ -469,9 +469,6 @@ impl<T: Tween> StaticTimeline<T> {
         self.time.framerate()
     }
 
-    /// # Panics
-    ///
-    /// TODO!
     pub fn new_sequence(&mut self, name: &str) -> Option<&mut Sequence<T>> {
         self.max_sequences += 1;
 
@@ -488,19 +485,16 @@ impl<T: Tween> StaticTimeline<T> {
         self.sequence_name_map.get(name)
     }
 
-    /// # Panics
-    ///
-    /// TODO!
     #[inline]
     pub fn get_sequence_with_pointer(&mut self, pointer: usize) -> Option<&mut Sequence<T>> {
         self.sequences.get_mut(&pointer)
     }
 
-    /// # Panics
-    ///
-    /// TODO!
     pub fn get_sequence_with_name(&mut self, name: &str) -> Option<&mut Sequence<T>> {
-        let ptr = self.get_sequence_pointer(name).unwrap();
+        let ptr = match self.get_sequence_pointer(name) {
+            Some(p) => p,
+            None => return None,
+        };
 
         self.get_sequence_with_pointer(*ptr)
     }
@@ -545,23 +539,23 @@ impl<T: Tween> StaticTimeline<T> {
         self.time.set_by_timestamp(t);
     }
 
-    /// # Panics
-    ///
-    /// TODO!
     #[inline]
     pub fn tween_by_name(&mut self, sequence_name: &str) -> T {
         let time = self.time.clone();
-        let sequence = self.get_sequence_with_name(sequence_name).unwrap();
+        let sequence = match self.get_sequence_with_name(sequence_name) {
+            Some(s) => s,
+            None => return T::default(),
+        };
         sequence.tween(&time)
     }
 
-    /// # Panics
-    ///
-    /// TODO!
     #[inline]
     pub fn tween_by_pointer(&mut self, sequence_ptr: usize) -> T {
         let time = self.time.clone();
-        let sequence = self.get_sequence_with_pointer(sequence_ptr).unwrap();
+        let sequence = match self.get_sequence_with_pointer(sequence_ptr) {
+            Some(s) => s,
+            None => return T::default(),
+        };
         sequence.tween(&time)
     }
 }
@@ -591,9 +585,6 @@ impl Timeline {
         self.time.framerate()
     }
 
-    /// # Panics
-    ///
-    /// TODO!
     pub fn new_sequence<T: Tween + 'static>(&mut self, name: &str) -> Option<&mut Sequence<T>> {
         self.max_sequences += 1;
 
@@ -605,10 +596,10 @@ impl Timeline {
             self.sequences.insert(HashMap::<usize, Sequence<T>>::new());
         }
 
-        let seq_list = self
-            .sequences
-            .get_mut::<HashMap<usize, Sequence<T>>>()
-            .unwrap();
+        let seq_list = match self.sequences.get_mut::<HashMap<usize, Sequence<T>>>() {
+            Some(s) => s,
+            None => return None,
+        };
 
         seq_list.insert(self.max_sequences, Sequence::<T>::new());
 
@@ -623,29 +614,26 @@ impl Timeline {
         self.sequence_name_map.get(name)
     }
 
-    /// # Panics
-    ///
-    /// TODO!
     pub fn get_sequence_with_pointer<T: Tween + 'static>(
         &mut self,
         pointer: usize,
     ) -> Option<&mut Sequence<T>> {
-        let seq_list = self
-            .sequences
-            .get_mut::<HashMap<usize, Sequence<T>>>()
-            .unwrap();
+        let seq_list = match self.sequences.get_mut::<HashMap<usize, Sequence<T>>>() {
+            Some(l) => l,
+            None => return None,
+        };
 
         seq_list.get_mut(&pointer)
     }
 
-    /// # Panics
-    ///
-    /// TODO!
     pub fn get_sequence_with_name<T: Tween + 'static>(
         &mut self,
         name: &str,
     ) -> Option<&mut Sequence<T>> {
-        let ptr = self.get_sequence_pointer(name).unwrap();
+        let ptr = match self.get_sequence_pointer(name) {
+            Some(p) => p,
+            None => return None,
+        };
 
         self.get_sequence_with_pointer(*ptr)
     }
@@ -690,23 +678,23 @@ impl Timeline {
         self.time.set_by_timestamp(t);
     }
 
-    /// # Panics
-    ///
-    /// TODO!
     #[inline]
     pub fn tween_by_name<T: Tween + 'static>(&mut self, sequence_name: &str) -> T {
         let time = self.time.clone();
-        let sequence = self.get_sequence_with_name(sequence_name).unwrap();
+        let sequence = match self.get_sequence_with_name(sequence_name) {
+            Some(s) => s,
+            None => return T::default(),
+        };
         sequence.tween(&time)
     }
 
-    /// # Panics
-    ///
-    /// TODO!
     #[inline]
     pub fn tween_by_pointer<T: Tween + 'static>(&mut self, sequence_ptr: usize) -> T {
         let time = self.time.clone();
-        let sequence = self.get_sequence_with_pointer(sequence_ptr).unwrap();
+        let sequence = match self.get_sequence_with_pointer(sequence_ptr) {
+            Some(s) => s,
+            None => return T::default(),
+        };
         sequence.tween(&time)
     }
 }
@@ -733,11 +721,7 @@ impl<T: Tween> Sequence<T> {
         }
     }
 
-    /// # Panics
-    ///
-    /// TODO!
     pub fn tween(&mut self, time: &Timecode) -> T {
-        // TODO: Make it so it returns 'T::default' instead of panicking.
         if !self.engine.is_running() {
             let current_keyframe_binding: Vec<(Timecode, Keyframe<T>)>;
             let current_keyframe: &(Timecode, Keyframe<T>);
@@ -749,6 +733,8 @@ impl<T: Tween> Sequence<T> {
                     || self.engine.has_ended_forwards()
                     || self.engine.is_empty()
                 {
+                    // FORWARDS LOGIC:
+                    // ====================================
                     if self.engine.is_sequence_ended_backwards()
                         && !self.last_time.is_less_than_full(time)
                     {
@@ -780,6 +766,8 @@ impl<T: Tween> Sequence<T> {
                         }
                     }
                 } else {
+                    // BACKWARDS LOGIC:
+                    // ====================================
                     // TODO: I don't know if this is the correct way to check this.
                     if self.engine.is_sequence_ended_forwards()
                         && !self.last_time.is_less_than_full(time)
@@ -872,38 +860,38 @@ impl<T: Tween> Sequence<T> {
         self.get_or_create_second_with_isize(&(hours_to_sec + minutes_to_sec + time.seconds()))
     }
 
-    /// # Panics
-    ///
-    /// TODO!
     pub fn add_keyframe_at_timestamp(
         &mut self,
         key: Keyframe<T>,
         time: &Timecode,
     ) -> Option<&mut Keyframe<T>> {
-        // TODO: Make it so it returns 'None' instead of panicking.
-        let second: &mut SecondLeaf<T> = self.get_or_create_second_with_timestamp(time).unwrap();
-        let frame: &mut FrameLeaf<T> = second.get_or_create_frame_with_timestamp(time).unwrap();
+        let second: &mut SecondLeaf<T> = match self.get_or_create_second_with_timestamp(time) {
+            Some(s) => s,
+            None => return None,
+        };
+        let frame: &mut FrameLeaf<T> = match second.get_or_create_frame_with_timestamp(time) {
+            Some(f) => f,
+            None => return None,
+        };
 
         frame.add_keyframe_at_timestamp(time, key)
     }
 
-    /// # Panics
-    ///
-    /// TODO!
     pub fn get_keyframe_at_timestamp(&mut self, time: &Timecode) -> Option<&mut Keyframe<T>> {
-        // TODO: Make it so it returns 'None' instead of panicking.
-        let second: &mut SecondLeaf<T> = self.get_second_with_timestamp(time).unwrap();
-        let frame: &mut FrameLeaf<T> = second.get_frame_with_timestamp(time).unwrap();
+        let second: &mut SecondLeaf<T> = match self.get_second_with_timestamp(time) {
+            Some(s) => s,
+            None => return None,
+        };
+        let frame: &mut FrameLeaf<T> = match second.get_frame_with_timestamp(time) {
+            Some(s) => s,
+            None => return None,
+        };
 
         frame.get_keyframe_at_timestamp(time)
     }
 
-    /// # Panics
-    ///
-    /// TODO!
     pub fn add_keyframes_at_timestamp(&mut self, keyframes: Vec<(Keyframe<T>, &Timecode)>) {
         for k in keyframes {
-            // TODO: Make it so it returns 'None' instead of panicking.
             self.add_keyframe_at_timestamp(k.0, k.1);
         }
     }
