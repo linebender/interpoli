@@ -12,18 +12,18 @@ readme = "README.md"
 # and with the MSRV in the `Unreleased` section of CHANGELOG.md.
 rust-version = "1.75"
 
+[package.metadata.docs.rs]
+all-features = true
+# There are no platform specific docs.
+default-target = "x86_64-unknown-linux-gnu"
+targets = []
+
 [features]
 default = ["std"]
 std = ["kurbo/std", "peniko/std"]
 libm = ["kurbo/libm", "peniko/libm"]
 mint = ["keyframe/mint_types", "kurbo/mint"]
 vello = ["dep:vello"]
-
-[package.metadata.docs.rs]
-all-features = true
-default-target = "x86_64-unknown-linux-gnu"
-# Interpoli is entirely platform-agnostic, so only display docs for one platform
-targets = []
 
 [dependencies]
 hashbrown = "0.15.0"

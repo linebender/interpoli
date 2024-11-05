@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
+#![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #![warn(unused_crate_dependencies)]
 
 //! # Interpoli
