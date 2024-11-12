@@ -27,7 +27,7 @@ vello = ["dep:vello"]
 
 [dependencies]
 hashbrown = "0.15.0"
-keyframe = { version = "1.1.1", default-features = false }
+keyframe = { version = "1.1.1", default-features = false, features = ["mint_types"] }
 kurbo = { version = "0.11", default-features = false }
 peniko = { version = "0.1.1", default-features = false }
 vello = { version = "0.2.0", default-features = false, optional = true }
