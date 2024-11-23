@@ -21,7 +21,7 @@
     elided_lifetimes_in_paths,
     clippy::use_self,
     clippy::cast_possible_truncation,
-    clippy::exhaustive_enums,
+    clippy::exhaustive_enums
 )]
 
 extern crate alloc;
