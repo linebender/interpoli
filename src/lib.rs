@@ -111,6 +111,5 @@ mod tests {
     // Delete this dummy test once we have an actual real test.
     #[test]
     fn dummy_test_until_we_have_a_real_test() {
-        assert!(true);
     }
 }
