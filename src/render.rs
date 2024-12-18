@@ -353,7 +353,7 @@ impl Batch {
         for draw in self.draws.iter().rev() {
             // Some nastiness to avoid cloning the brush if unnecessary
             let modified_brush = if draw.alpha != 1.0 {
-                Some(fixed::brush_with_alpha(&draw.brush, draw.alpha))
+                Some(draw.brush.clone().multiply_alpha(draw.alpha as f32))
             } else {
                 None
             };
