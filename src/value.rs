@@ -41,7 +41,7 @@ pub enum ValueRef<'a, T> {
     Owned(T),
 }
 
-impl<'a, T> AsRef<T> for ValueRef<'a, T> {
+impl<T> AsRef<T> for ValueRef<'_, T> {
     fn as_ref(&self) -> &T {
         match self {
             Self::Borrowed(value) => value,
@@ -50,7 +50,7 @@ impl<'a, T> AsRef<T> for ValueRef<'a, T> {
     }
 }
 
-impl<'a, T: Clone> ValueRef<'a, T> {
+impl<T: Clone> ValueRef<'_, T> {
     pub fn into_owned(self) -> T {
         match self {
             Self::Borrowed(value) => value.clone(),
