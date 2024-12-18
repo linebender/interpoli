@@ -91,7 +91,7 @@ impl Brush {
                 if alpha == 1.0 {
                     ValueRef::Borrowed(value)
                 } else {
-                    ValueRef::Owned(fixed::brush_with_alpha(value, alpha))
+                    ValueRef::Owned(value.clone().multiply_alpha(alpha as f32))
                 }
             }
             Self::Animated(value) => ValueRef::Owned(value.evaluate(alpha, frame)),
