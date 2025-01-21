@@ -10,7 +10,7 @@
 
 <!-- TODO: Fix [![Linebender Zulip, #kurbo stream](https://img.shields.io/badge/Linebender-%23kurbo-red?logo=Zulip)](https://xi.zulipchat.com/#narrow/stream/260979-kurbo) -->
 [![dependency status](https://deps.rs/repo/github/linebender/interpoli/status.svg)](https://deps.rs/repo/github/linebender/interpoli)
-[![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](#license)
+[![Apache 2.0 or MIT license.](https://img.shields.io/badge/license-Apache--2.0_OR_MIT-blue.svg)](#license)
 [![Build status](https://github.com/linebender/interpoli/workflows/CI/badge.svg)](https://github.com/linebender/interpoli/actions)
 [![Crates.io](https://img.shields.io/crates/v/interpoli.svg)](https://crates.io/crates/interpoli)
 [![Docs](https://docs.rs/interpoli/badge.svg)](https://docs.rs/interpoli)
