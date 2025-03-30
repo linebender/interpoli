@@ -160,6 +160,20 @@ pub trait Tween: Clone + Default {
     fn tween(&self, other: &Self, t: f64, easing: &Easing) -> Self;
 }
 
+impl Tween for f32 {
+    fn tween(&self, other: &Self, t: f64, easing: &Easing) -> Self {
+        keyframe::ease(
+            keyframe::functions::BezierCurve::from(
+                keyframe::mint::Vector2::from_slice(&[easing.o.x, easing.o.y]),
+                keyframe::mint::Vector2::from_slice(&[easing.i.x, easing.i.y]),
+            ),
+            *self,
+            *other,
+            t,
+        )
+    }
+}
+
 impl Tween for f64 {
     fn tween(&self, other: &Self, t: f64, easing: &Easing) -> Self {
         keyframe::ease(
