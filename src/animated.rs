@@ -5,7 +5,6 @@
 
 use alloc::vec::Vec;
 #[cfg(all(not(feature = "std"), feature = "libm"))]
-#[allow(unused_imports)]
 use kurbo::common::FloatFuncs as _;
 use kurbo::{Affine, PathEl, Point, Size, Vec2};
 
