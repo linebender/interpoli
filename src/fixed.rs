@@ -4,7 +4,6 @@
 //! Representations of fixed (non-animated) values.
 
 #[cfg(all(not(feature = "std"), feature = "libm"))]
-#[allow(unused_imports)]
 use kurbo::common::FloatFuncs as _;
 use kurbo::{Affine, Point, Vec2};
 
