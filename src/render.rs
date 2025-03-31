@@ -1,7 +1,7 @@
 // Copyright 2024 the Interpoli Authors
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-#![allow(clippy::shadow_unrelated)]
+#![expect(clippy::shadow_unrelated, reason = "Deferred")]
 
 use crate::{fixed, Composition, Content, Draw, Geometry, GroupTransform, Layer, Shape};
 use kurbo::{Affine, PathEl, Rect};
@@ -9,7 +9,7 @@ use peniko::{Fill, Mix};
 use std::ops::Range;
 
 /// Renders a composition into a scene.
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations, reason = "Deferred")]
 #[derive(Default)]
 pub struct Renderer {
     batch: Batch,
@@ -68,7 +68,7 @@ impl Renderer {
         scene.pop_layer();
     }
 
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments, reason = "Deferred")]
     fn render_layer(
         &mut self,
         animation: &Composition,

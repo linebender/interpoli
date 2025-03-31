@@ -354,7 +354,7 @@ impl Gradient {
 #[derive(Clone, Debug)]
 pub struct ColorStops {
     pub frames: Vec<Time>,
-    pub values: Vec<Vec<f64>>,
+    pub values: Vec<Vec<f32>>,
     pub count: usize,
 }
 
@@ -378,7 +378,7 @@ impl ColorStops {
             let g = v0.get(j + 2)?.tween(v1.get(j + 2)?, t, &easing);
             let b = v0.get(j + 3)?.tween(v1.get(j + 3)?, t, &easing);
             let a = v0.get(j + 4)?.tween(v1.get(j + 4)?, t, &easing);
-            let stop = peniko::ColorStop::from((offset as f32, peniko::Color::rgba(r, g, b, a)));
+            let stop = peniko::ColorStop::from((offset, peniko::Color::new([r, g, b, a])));
             stops.push(stop);
         }
         Some(stops)
@@ -406,7 +406,10 @@ impl Brush {
     /// Evaluates the animation at the specified time.
     pub fn evaluate(&self, alpha: f64, frame: f64) -> fixed::Brush {
         match self {
-            Self::Solid(value) => value.evaluate(frame).multiply_alpha(alpha as f32).into(),
+            Self::Solid(value) => value
+                .evaluate_or(frame, peniko::Color::TRANSPARENT)
+                .multiply_alpha(alpha as f32)
+                .into(),
             Self::Gradient(value) => value.evaluate(frame),
         }
     }

@@ -21,7 +21,8 @@
     elided_lifetimes_in_paths,
     clippy::use_self,
     clippy::cast_possible_truncation,
-    clippy::exhaustive_enums
+    clippy::exhaustive_enums,
+    reason = "Deferred"
 )]
 
 extern crate alloc;
@@ -48,8 +49,12 @@ pub use render::Renderer;
 
 macro_rules! simple_value {
     ($name:ident) => {
-        #[allow(clippy::large_enum_variant)]
         #[derive(Clone, Debug)]
+        #[allow(
+            clippy::allow_attributes,
+            reason = "This doesn't happen for all invocations."
+        )]
+        #[allow(clippy::large_enum_variant, reason = "It is how it is.")]
         pub enum $name {
             Fixed(fixed::$name),
             Animated(animated::$name),
