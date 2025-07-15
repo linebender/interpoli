@@ -10,7 +10,7 @@ repository = "https://github.com/linebender/interpoli"
 readme = "README.md"
 # Keep in sync with RUST_MIN_VER in .github/workflows/ci.yml, with the relevant README.md files
 # and with the MSRV in the `Unreleased` section of CHANGELOG.md.
-rust-version = "1.82"
+rust-version = "1.85"
 
 [package.metadata.docs.rs]
 all-features = true
@@ -26,11 +26,11 @@ mint = ["keyframe/mint_types", "kurbo/mint"]
 vello = ["dep:vello"]
 
 [dependencies]
-hashbrown = "0.15.1"
+hashbrown = "0.15.4"
 keyframe = { version = "1.1.1", default-features = false, features = ["mint_types"] }
-kurbo = { version = "0.11.1", default-features = false }
-peniko = { version = "0.3.1", default-features = false }
-vello = { version = "0.4.0", default-features = false, optional = true }
+kurbo = { version = "0.11.2", default-features = false }
+peniko = { version = "0.4.0", default-features = false }
+vello = { version = "0.5.0", default-features = false, optional = true }
 
 [lints]
 rust.unsafe_code = "forbid"
