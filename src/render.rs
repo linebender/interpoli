@@ -1,7 +1,7 @@
 // Copyright 2024 the Interpoli Authors
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-use crate::{fixed, Composition, Content, Draw, Geometry, GroupTransform, Layer, Shape};
+use crate::{Composition, Content, Draw, Geometry, GroupTransform, Layer, Shape, fixed};
 use kurbo::{Affine, PathEl, Rect};
 use peniko::{Fill, Mix};
 use std::ops::Range;

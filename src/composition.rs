@@ -7,7 +7,7 @@ use kurbo::{PathEl, Shape as _};
 
 use hashbrown::HashMap;
 
-use crate::{animated, Brush, Repeater, Stroke, Transform, Value};
+use crate::{Brush, Repeater, Stroke, Transform, Value, animated};
 
 /// Model of a Lottie file.
 #[derive(Clone, Default, Debug)]
