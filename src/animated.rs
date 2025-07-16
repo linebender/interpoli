@@ -8,7 +8,7 @@ use alloc::vec::Vec;
 use kurbo::common::FloatFuncs as _;
 use kurbo::{Affine, PathEl, Point, Size, Vec2};
 
-use crate::{fixed, spline::SplineToPath, value::Tween, Time, Value};
+use crate::{Time, Value, fixed, spline::SplineToPath, value::Tween};
 
 #[derive(Clone, Debug)]
 pub enum Position {
